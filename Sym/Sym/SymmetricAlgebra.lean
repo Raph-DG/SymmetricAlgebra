@@ -13,7 +13,7 @@ local notation "ι" => TensorAlgebra.ι R
 inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop :=
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
-/-
+
 instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) := ⟨by
   have h_iota (x : L) : (ι x) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 1 := by
     simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
@@ -22,7 +22,7 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
   intro x y h; induction h
   case mul_comm x y =>
     sorry
-⟩ -/
+⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
 
