@@ -91,17 +91,24 @@ def lem2 : IsSymAlg (iota R L) := by
   sorry
 
 
+/-
+Define a map from M to Polynomial R by sending e to x, where e is r1.symm 1. Then
+use the universal property described in IsSymRel to lift this to a morphism from R[M]
+to Polynomial R.
 
-def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (r1 : M ≃ₗ[R] R)
+Then use Polynomial.aeval to construct an alegbra morphism from R[x] to R[M] sending
+x to ι(e). We then wish to show that this morphism and the morphism constructed in=
+the previous paragraph are inverses of one another
+
+You may need to use Polynomial.algHom_ext in order to prove things about equivalences
+between maps out of Polynomial R
+-/
+def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
+             (r1 : Module.finrank M = 1)
              {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
              (salg : IsSymAlg inj)
              : SA ≃ₐ[R] Polynomial R := by
 
-  have e : M := r1.symm 1
-
-
-
-  -- Define map from M to Polynomial R by sending e to x, where e is r1.symm 1
 
   sorry
 
