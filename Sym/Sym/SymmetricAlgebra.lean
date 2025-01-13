@@ -1,5 +1,5 @@
 import Mathlib
-import Sym.HomogeneousRelation
+import Sym.newHomogeneousRelation
 
 open MvPolynomial RingQuot
 
