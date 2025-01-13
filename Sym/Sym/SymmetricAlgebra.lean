@@ -10,7 +10,7 @@ local notation "ι" => TensorAlgebra.ι R
 
 -- def I := TwoSidedIdeal.span {(ιₜ x * ιₜ y - ιₜ y * ιₜ x) | (x : L) (y : L)}
 
-inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop :=
+inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop where
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
 
@@ -19,9 +19,9 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
     simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
   have h_iota2 (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
     simp only [pow_two]; apply Submodule.mul_mem_mul; simp; simp
-  intro x y h; induction h
-  case mul_comm x y =>
-    sorry
+  intro x y h-- induction h
+ --case mul_comm x y =>
+  sorry
 ⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
@@ -108,8 +108,6 @@ def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
              {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
              (salg : IsSymAlg inj)
              : SA ≃ₐ[R] Polynomial R := by
-
-
   sorry
 
 
