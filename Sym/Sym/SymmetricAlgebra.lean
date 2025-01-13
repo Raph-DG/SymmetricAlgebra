@@ -83,12 +83,27 @@ abbrev mkAlgHom : TensorAlgebra R L →ₐ[R] 𝔖 R L := RingQuot.mkAlgHom R (S
 def iota : L →ₗ[R] 𝔖 R L := (mkAlgHom R L).toLinearMap.comp (TensorAlgebra.ι R (M := L))
 
 
-def lem2 : IsSymAlg (iota R L) := sorry
+/-
+Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
+for uniqueness
+-/
+def lem2 : IsSymAlg (iota R L) := by
+  sorry
+
+
 
 def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (r1 : M ≃ₗ[R] R)
              {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
              (salg : IsSymAlg inj)
-             : SA ≃ₗ[R] Polynomial R := sorry
+             : SA ≃ₐ[R] Polynomial R := by
+
+  have e : M := r1.symm 1
+
+
+
+  -- Define map from M to Polynomial R by sending e to x, where e is r1.symm 1
+
+  sorry
 
 def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
