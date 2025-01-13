@@ -10,7 +10,6 @@ The interaction between TwoSidedIdeal and Ideals seems to be not as good as we'd
 #check Relation.EqvGen
 
 variable {ι : Type*} [DecidableEq ι] [AddMonoid ι]
-variable {ι : Type*} [DecidableEq ι] [AddMonoid ι]
 variable {A : Type*} [Semiring A]
 
 class IsHomogeneousRelation {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ) [GradedRing 𝒜]
@@ -20,18 +19,38 @@ class IsHomogeneousRelation {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
 
 namespace HomogeneousRelation
 
-namespace HomogeneousRelation
 
 section RingCon
 
 variable {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
 variable (𝒜 : ι → σ) [GradedRing 𝒜] (rel : A → A → Prop) [inst : IsHomogeneousRelation 𝒜 rel]
 
-instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := sorry
-instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := sorry
+open Relation
+
+instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := by
+  apply IsHomogeneousRelation.mk
+  intro x y h n
+  replace inst :  ∀ {x y : A}, (Relation.EqvGen rel) x y →
+  ∀ i : ι, (Relation.EqvGen rel) ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) y) :=
+    fun {x y} a i ↦ IsHomogeneousRelation.is_homogeneous' a i
+  rw [RingQuot.eqvGen_rel_eq rel] at h ⊢
+  constructor
+
+  sorry
+
+
+
+
+
+
+instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
+  apply IsHomogeneousRelation.mk
+  rw [Equivalence.eqvGen_eq (Relation.EqvGen.is_equivalence rel)]
+  exact IsHomogeneousRelation.is_homogeneous'
+
 
 instance : IsHomogeneousRelation 𝒜 (RingConGen.Rel rel) :=
-  (RingQuot.eqvGen_rel_eq rel).symm ▸ (inferInstance)
+  (RingQuot.eqvGen_rel_eq rel).symm ▸ inferInstance
 
 end RingCon
 
