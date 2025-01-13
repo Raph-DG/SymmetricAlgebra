@@ -1,5 +1,5 @@
 import Mathlib
---import LieAlgCohomology.MissingLemmas.HomogeneousRelation
+import Sym.HomogeneousRelation
 
 open MvPolynomial RingQuot
 
@@ -26,10 +26,26 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
 
+
+variable {R} {L} in
+structure IsSymAlg {RL : Type*}
+              [CommRing RL] [a : Algebra R RL]
+              (iota : L →ₗ[R] RL) : Prop where
+  ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
+    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+
+
+
+
+
+
+
 local notation "𝔖" => SymmetricAlgebra
+
 
 namespace SymmetricAlgebra
 
+-- This is lemma 1
 instance : CommRing (𝔖 R L) where
   mul_comm a b := match a, b with
     | ⟨a⟩, ⟨b⟩ => by
@@ -60,9 +76,25 @@ instance : CommRing (𝔖 R L) where
       · intro a1 a2 h1 h2 x; exact P_mul a1 a2 x (h1 x) (h2 x)
       · intro a1 a2 h1 h2 x; exact P_add a1 a2 x (h1 x) (h2 x)
 
+--#check IsSymAlg (𝔖 R L)
+
 abbrev mkAlgHom : TensorAlgebra R L →ₐ[R] 𝔖 R L := RingQuot.mkAlgHom R (SymRel R L)
 
 def iota : L →ₗ[R] 𝔖 R L := (mkAlgHom R L).toLinearMap.comp (TensorAlgebra.ι R (M := L))
+
+
+def lem2 : IsSymAlg (iota R L) := sorry
+
+def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (r1 : M ≃ₗ[R] R)
+             {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
+             (salg : IsSymAlg inj)
+             : SA ≃ₗ[R] Polynomial R := sorry
+
+def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
+         {RM RM' : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
+         (salg : IsSymAlg iM') (map : M →ₗ[R] M') : RM →+* RM' := sorry
 
 variable (I : Type*) (basis_I : Basis I R L)
 
@@ -86,9 +118,8 @@ abbrev gradingSymmetricAlgebra : ℕ → Submodule R (𝔖 R L) :=
   (Submodule.map (mkAlgHom R L)).comp
     (LinearMap.range (TensorAlgebra.ι R : L →ₗ[R] TensorAlgebra R L) ^ ·)
 
-/-
+
 #synth GradedAlgebra (gradingSymmetricAlgebra R L)
 
 lemma proj_comm (x : TensorAlgebra R L) (m : ℕ) : mkAlgHom R L ((GradedAlgebra.proj ((LinearMap.range (TensorAlgebra.ι R : L →ₗ[R] TensorAlgebra R L) ^ ·)) m) x) = (GradedAlgebra.proj (gradingSymmetricAlgebra R L) m) (mkAlgHom R L x) := by
   sorry
--/
