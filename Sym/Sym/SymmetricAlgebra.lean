@@ -10,7 +10,7 @@ local notation "ι" => TensorAlgebra.ι R
 
 -- def I := TwoSidedIdeal.span {(ιₜ x * ιₜ y - ιₜ y * ιₜ x) | (x : L) (y : L)}
 
-inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop :=
+inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop where
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
 
@@ -19,9 +19,9 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
     simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
   have h_iota2 (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
     simp only [pow_two]; apply Submodule.mul_mem_mul; simp; simp
-  intro x y h; induction h
-  case mul_comm x y =>
-    sorry
+  intro x y h-- induction h
+ --case mul_comm x y =>
+  sorry
 ⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
@@ -108,15 +108,18 @@ def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
              {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
              (salg : IsSymAlg inj)
              : SA ≃ₐ[R] Polynomial R := by
-
-
   sorry
 
+
+/-
+Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
+property to lift this to a map from R[M] to R[M']
+-/
 def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg : IsSymAlg iM') (map : M →ₗ[R] M') : RM →+* RM' := sorry
+         (salg : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' := sorry
 
 variable (I : Type*) (basis_I : Basis I R L)
 
