@@ -112,11 +112,16 @@ def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
 
   sorry
 
+
+/-
+Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
+property to lift this to a map from R[M] to R[M']
+-/
 def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg : IsSymAlg iM') (map : M →ₗ[R] M') : RM →+* RM' := sorry
+         (salg : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' := sorry
 
 variable (I : Type*) (basis_I : Basis I R L)
 
