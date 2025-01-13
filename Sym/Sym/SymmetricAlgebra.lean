@@ -13,7 +13,7 @@ local notation "ι" => TensorAlgebra.ι R
 inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop :=
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
-/-
+
 instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) := ⟨by
   have h_iota (x : L) : (ι x) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 1 := by
     simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
@@ -22,7 +22,7 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
   intro x y h; induction h
   case mul_comm x y =>
     sorry
-⟩ -/
+⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
 
@@ -83,12 +83,34 @@ abbrev mkAlgHom : TensorAlgebra R L →ₐ[R] 𝔖 R L := RingQuot.mkAlgHom R (S
 def iota : L →ₗ[R] 𝔖 R L := (mkAlgHom R L).toLinearMap.comp (TensorAlgebra.ι R (M := L))
 
 
-def lem2 : IsSymAlg (iota R L) := sorry
+/-
+Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
+for uniqueness
+-/
+def lem2 : IsSymAlg (iota R L) := by
+  sorry
 
-def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (r1 : M ≃ₗ[R] R)
+
+/-
+Define a map from M to Polynomial R by sending e to x, where e is r1.symm 1. Then
+use the universal property described in IsSymRel to lift this to a morphism from R[M]
+to Polynomial R.
+
+Then use Polynomial.aeval to construct an alegbra morphism from R[x] to R[M] sending
+x to ι(e). We then wish to show that this morphism and the morphism constructed in=
+the previous paragraph are inverses of one another
+
+You may need to use Polynomial.algHom_ext in order to prove things about equivalences
+between maps out of Polynomial R
+-/
+def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
+             (r1 : Module.finrank M = 1)
              {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
              (salg : IsSymAlg inj)
-             : SA ≃ₗ[R] Polynomial R := sorry
+             : SA ≃ₐ[R] Polynomial R := by
+
+
+  sorry
 
 def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
