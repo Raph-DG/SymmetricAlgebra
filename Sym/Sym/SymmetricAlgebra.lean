@@ -137,22 +137,37 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
 
 
 
-/-
-Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
-property to lift this to a map from R[M] to R[M']
--/
-def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
-         {RM RM' : Type*}
-         [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
-         {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' :=
-    let φ : M →ₗ[R] RM' := iM'.comp phi
-    let f: RM →+* RM' := (salg.ex_map φ).exists.choose
+def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
+  (salg.ex_map phi).exists.choose
+
+
+theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
+  /-
   { toFun := f
     map_one' := f.map_one
     map_mul' := f.map_mul
     map_zero' := f.map_zero
-    map_add' := f.map_add }
+    map_add' := f.map_add }-/
+
+
+/-
+Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
+property to lift this to a map from R[M] to R[M']
+-/
+def lem5Map {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
+         {RM RM' : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
+         (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →ₐ[R] RM' :=
+    IsSymAlg.lift R salg (iM'.comp phi)
+
 
 -- variable {R} {L} in
 -- structure IsSymAlg {RL : Type*}
