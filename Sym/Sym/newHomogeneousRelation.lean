@@ -26,19 +26,34 @@ variable (𝒜 : ι → σ) [GradedRing 𝒜] (rel : A → A → Prop) [inst : I
 
 open Relation
 
-instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := by
-  apply IsHomogeneousRelation.mk
-  intro x y h n
-  induction h with
-  | of h  => sorry
 
-  | add_left _ _ => sorry
-  | mul_left _ _ => sorry
-  | mul_right _ _ => sorry
+lemma eqvGen_ringQuot_of_eqvGen {x y : A} (h : EqvGen rel x y) :
+    EqvGen (RingQuot.Rel rel) x y :=
+  Relation.EqvGen.mono (fun _ _ hab ↦ RingQuot.Rel.of hab) h
 
 
 
+lemma add_left {x y : A} (h : rel x y) (i : ι) : 1 = 5 := sorry
 
+
+instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
+  intro x y h n ; induction h
+  case of x y h_rel =>
+    apply eqvGen_ringQuot_of_eqvGen
+    exact IsHomogeneousRelation.is_homogeneous' h_rel n
+  case add_left a b c h_rel h =>
+    rw [map_add, map_add]
+    --refine RingQuot.Rel.add_left ?_ (a := ((GradedRing.proj 𝒜 n) a)) (b := ((GradedRing.proj 𝒜 n) b))
+    apply eqvGen_ringQuot_of_eqvGen
+
+    sorry
+
+
+
+  case mul_left a b c h_rel h => sorry
+  case mul_right a b c h_rel h => sorry
+
+    ⟩
 
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   apply IsHomogeneousRelation.mk
