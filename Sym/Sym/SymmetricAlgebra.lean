@@ -119,7 +119,21 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' := sorry
+         (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' :=
+    let φ : M →ₗ[R] RM' := iM'.comp phi
+    let f: RM →+* RM' := (salg.ex_map φ).exists.choose
+  { toFun := f
+    map_one' := f.map_one
+    map_mul' := f.map_mul
+    map_zero' := f.map_zero
+    map_add' := f.map_add }
+
+-- variable {R} {L} in
+-- structure IsSymAlg {RL : Type*}
+--               [CommRing RL] [a : Algebra R RL]
+--               (iota : L →ₗ[R] RL) : Prop where
+--   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
+--     : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
 
 variable (I : Type*) (basis_I : Basis I R L)
 
