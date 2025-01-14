@@ -14,14 +14,46 @@ inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop where
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
 
-instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) := ⟨by
-  have h_iota (x : L) : (ι x) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 1 := by
-    simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
-  have h_iota2 (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
+instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) :=⟨ by
+  have h_iota (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
     simp only [pow_two]; apply Submodule.mul_mem_mul; simp; simp
-  intro x y h-- induction h
- --case mul_comm x y =>
-  sorry
+  intro x y h i
+  induction h
+  case mul_comm x y =>
+    have : (SymRel R L) (ι x * ι y) (ι y * ι x) := by apply SymRel.mul_comm x y
+    have h_decompose : (ι x * ι y) = ((DirectSum.decompose (fun n ↦ LinearMap.range ι ^ n) (ι x * ι y)) 2) := by
+        exact
+          Eq.symm (DirectSum.decompose_of_mem_same (fun n ↦ LinearMap.range ι ^ n) (h_iota x y))
+    have h_decompose' : (ι y * ι x) = ((DirectSum.decompose (fun n ↦ LinearMap.range ι ^ n) (ι y * ι x)) 2) := by
+        exact
+          Eq.symm (DirectSum.decompose_of_mem_same (fun n ↦ LinearMap.range ι ^ n) (h_iota y x))
+    have h_zero : ∀ i ≠ 2, (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by
+      intro i h
+      rw [GradedRing.proj_apply, h_decompose]
+      simp only [DirectSum.decompose_coe, ZeroMemClass.coe_eq_zero]
+      apply DirectSum.of_eq_of_ne
+      exact id (Ne.symm h)
+    have h_zero' : ∀ i ≠ 2, (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by
+      intro i h
+      rw [GradedRing.proj_apply, h_decompose']
+      simp only [DirectSum.decompose_coe, ZeroMemClass.coe_eq_zero]
+      apply DirectSum.of_eq_of_ne
+      exact id (Ne.symm h)
+    by_cases h0 : i = 2
+    · constructor
+      rw [h0]
+      simp only [GradedRing.proj_apply]
+      rw [←h_decompose, ←h_decompose']
+      exact this
+    · rw [←ne_eq] at h0
+      constructor
+      have h_zeroh : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by exact h_zero i h0
+      have h_zeroh' : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by exact h_zero' i h0
+      rw [h_zeroh, h_zeroh']
+      have : SymRel R L (ι x * ι x) (ι x * ι x) := by exact SymRel.mul_comm x x
+      have zero : 0 = (ι (0 : L) * ι (0 : L)) := by simp only [map_zero, mul_zero]
+      rw [zero]
+      exact SymRel.mul_comm 0 0
 ⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
