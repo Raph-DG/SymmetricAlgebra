@@ -14,14 +14,46 @@ inductive SymRel : (TensorAlgebra R L) → (TensorAlgebra R L) → Prop where
   | mul_comm (x y : L) : SymRel (ι x * ι y) (ι y * ι x)
 
 
-instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) := ⟨by
-  have h_iota (x : L) : (ι x) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 1 := by
-    simp only [pow_one, LinearMap.mem_range, TensorAlgebra.ι_inj, exists_eq]
-  have h_iota2 (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
+instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) (SymRel R L) :=⟨ by
+  have h_iota (x y : L) : (ι x * ι y) ∈ (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) 2 := by
     simp only [pow_two]; apply Submodule.mul_mem_mul; simp; simp
-  intro x y h-- induction h
- --case mul_comm x y =>
-  sorry
+  intro x y h i
+  induction h
+  case mul_comm x y =>
+    have : (SymRel R L) (ι x * ι y) (ι y * ι x) := by apply SymRel.mul_comm x y
+    have h_decompose : (ι x * ι y) = ((DirectSum.decompose (fun n ↦ LinearMap.range ι ^ n) (ι x * ι y)) 2) := by
+        exact
+          Eq.symm (DirectSum.decompose_of_mem_same (fun n ↦ LinearMap.range ι ^ n) (h_iota x y))
+    have h_decompose' : (ι y * ι x) = ((DirectSum.decompose (fun n ↦ LinearMap.range ι ^ n) (ι y * ι x)) 2) := by
+        exact
+          Eq.symm (DirectSum.decompose_of_mem_same (fun n ↦ LinearMap.range ι ^ n) (h_iota y x))
+    have h_zero : ∀ i ≠ 2, (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by
+      intro i h
+      rw [GradedRing.proj_apply, h_decompose]
+      simp only [DirectSum.decompose_coe, ZeroMemClass.coe_eq_zero]
+      apply DirectSum.of_eq_of_ne
+      exact id (Ne.symm h)
+    have h_zero' : ∀ i ≠ 2, (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by
+      intro i h
+      rw [GradedRing.proj_apply, h_decompose']
+      simp only [DirectSum.decompose_coe, ZeroMemClass.coe_eq_zero]
+      apply DirectSum.of_eq_of_ne
+      exact id (Ne.symm h)
+    by_cases h0 : i = 2
+    · constructor
+      rw [h0]
+      simp only [GradedRing.proj_apply]
+      rw [←h_decompose, ←h_decompose']
+      exact this
+    · rw [←ne_eq] at h0
+      constructor
+      have h_zeroh : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by exact h_zero i h0
+      have h_zeroh' : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by exact h_zero' i h0
+      rw [h_zeroh, h_zeroh']
+      have : SymRel R L (ι x * ι x) (ι x * ι x) := by exact SymRel.mul_comm x x
+      have zero : 0 = (ι (0 : L) * ι (0 : L)) := by simp only [map_zero, mul_zero]
+      rw [zero]
+      exact SymRel.mul_comm 0 0
 ⟩
 
 abbrev SymmetricAlgebra := RingQuot (SymRel R L)
@@ -32,7 +64,7 @@ structure IsSymAlg {RL : Type*}
               [CommRing RL] [a : Algebra R RL]
               (iota : L →ₗ[R] RL) : Prop where
   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
-    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ₗ iota
 
 
 
@@ -84,6 +116,18 @@ def iota : L →ₗ[R] 𝔖 R L := (mkAlgHom R L).toLinearMap.comp (TensorAlgebr
 
 
 /-
+This says that the symmetric algebra over R of the zero module
+(here defined as any module which has at most one element) must be isomorphic
+as an R algebra to R.
+-/
+def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
+  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) {inj : M →ₗ[R] RZ}
+  (salg : IsSymAlg inj) : RZ ≃ₐ[R] R := by
+
+
+  sorry
+
+/-
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
 -/
@@ -91,35 +135,91 @@ def lem2 : IsSymAlg (iota R L) := by
   sorry
 
 
-/-
-Define a map from M to Polynomial R by sending e to x, where e is r1.symm 1. Then
-use the universal property described in IsSymRel to lift this to a morphism from R[M]
-to Polynomial R.
+def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
+  (salg.ex_map phi).exists.choose
 
-Then use Polynomial.aeval to construct an alegbra morphism from R[x] to R[M] sending
-x to ι(e). We then wish to show that this morphism and the morphism constructed in=
+
+theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
+
+
+def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
+  [Nontrivial R] (mf : Module.Free R M)
+  (r1 : Module.finrank R M = 1) : M →ₗ[R] Polynomial R :=
+    have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+    let B := Module.finBasis R M
+    Basis.constr B R (fun _ ↦ Polynomial.X)
+
+/-
+Use Polynomial.aeval to construct an alegbra morphism from Polynomial R to A sending
+x to φ(e), where is a . We then wish to show that this morphism and the morphism constructed in=
 the previous paragraph are inverses of one another
 
 You may need to use Polynomial.algHom_ext in order to prove things about equivalences
 between maps out of Polynomial R
 -/
-def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
-             (r1 : Module.finrank M = 1)
-             {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
-             (salg : IsSymAlg inj)
-             : SA ≃ₐ[R] Polynomial R := by
-  sorry
+def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
+             (r1 : Module.finrank R M = 1) [Nontrivial R]
+             : IsSymAlg (freeRkOneToPoly R mf r1) := {
+    ex_map := by
+      intro A rA aA φ
+      have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+      have B := Module.finBasis R M
+
+      -- Take e to be the unique element of our basis B
+      let e : M := sorry
+
+
+      -- Use Polynomial.aeval to define a morphism φ' : Polynomial R →ₐ[R] A which
+      -- takes X and maps it to φ(e)
+      let φ' : Polynomial R →ₐ[R] A := sorry
+
+      use φ'
+      constructor
+      · simp
+        sorry
+      · intro g
+        simp
+        intro hg
+        -- Here, use Polynomial.algHom_ext to prove uniqueness
+        sorry
+  }
+
+
+  /-
+  { toFun := f
+    map_one' := f.map_one
+    map_mul' := f.map_mul
+    map_zero' := f.map_zero
+    map_add' := f.map_add }-/
 
 
 /-
 Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
 property to lift this to a map from R[M] to R[M']
 -/
-def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
+def lem5Map {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' := sorry
+         (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →ₐ[R] RM' :=
+    IsSymAlg.lift R salg (iM'.comp phi)
+
+
+-- variable {R} {L} in
+-- structure IsSymAlg {RL : Type*}
+--               [CommRing RL] [a : Algebra R RL]
+--               (iota : L →ₗ[R] RL) : Prop where
+--   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
+--     : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+
+
 
 variable (I : Type*) (basis_I : Basis I R L)
 
