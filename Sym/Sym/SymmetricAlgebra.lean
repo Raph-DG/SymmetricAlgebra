@@ -121,18 +121,43 @@ This says that the symmetric algebra over R of the zero module
 as an R algebra to R.
 -/
 def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
-  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) {inj : M →ₗ[R] RZ}
-  (salg : IsSymAlg inj) : RZ ≃ₐ[R] R := by
+  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) : IsSymAlg (R := R) (L := M) (RL := R) 0 := {
+    ex_map := by
+      intro a b c φ
+
+      -- R is initial in the category of R-algebras, so this morphism is unique
+      let φ' : R →ₐ[R] a := sorry
+      use φ'
+      constructor
+      · -- Prove relation holds
+        sorry
+      · -- Prove uniqueness (should hold by definition)
+        sorry
+  }
 
 
-  sorry
 
 /-
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
 -/
-def lem2 : IsSymAlg (iota R L) := by
-  sorry
+def lem2 : IsSymAlg (iota R L) := {
+  ex_map := by
+    intro alg com halg φ
+    let tensorphi : TensorAlgebra R L →ₐ[R] alg := TensorAlgebra.lift R φ
+
+    -- Define a morphism out of the symmetric algebra using RingQuot.lift
+    let φ' : SymmetricAlgebra R L →ₐ[R] alg := by
+      sorry
+
+    use φ'
+    constructor
+    · -- Prove existence
+      sorry
+    · -- Prove uniqueness
+      sorry
+}
+
 
 
 def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
@@ -204,7 +229,7 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
 Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
 property to lift this to a map from R[M] to R[M']
 -/
-def lem5Map {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
+def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Module R M']
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
