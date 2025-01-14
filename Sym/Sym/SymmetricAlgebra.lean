@@ -84,6 +84,18 @@ def iota : L →ₗ[R] 𝔖 R L := (mkAlgHom R L).toLinearMap.comp (TensorAlgebr
 
 
 /-
+This says that the symmetric algebra over R of the zero module
+(here defined as any module which has at most one element) must be isomorphic
+as an R algebra to R.
+-/
+def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
+  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) {inj : M →ₗ[R] RZ}
+  (salg : IsSymAlg inj) : RZ ≃ₐ[R] R := by
+
+
+  sorry
+
+/-
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
 -/
@@ -92,7 +104,8 @@ def lem2 : IsSymAlg (iota R L) := by
 
 
 /-
-Define a map from M to Polynomial R by sending e to x, where e is r1.symm 1. Then
+Define a map from M to Polynomial R by sending e to x, where e is a generator for
+the module M. Then
 use the universal property described in IsSymRel to lift this to a morphism from R[M]
 to Polynomial R.
 
@@ -103,12 +116,25 @@ the previous paragraph are inverses of one another
 You may need to use Polynomial.algHom_ext in order to prove things about equivalences
 between maps out of Polynomial R
 -/
-def lem3 {M : Type*} [AddCommMonoid M] [Module R M] (mf : Module.Free R M)
-             (r1 : Module.finrank M = 1)
-             {SA : Type*} [CommRing SA] [a : Algebra R SA] {inj : M →ₗ[R] SA}
-             (salg : IsSymAlg inj)
-             : SA ≃ₐ[R] Polynomial R := by
-  sorry
+def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
+  [Nontrivial R] (mf : Module.Free R M)
+  (r1 : Module.finrank R M = 1) : M →ₗ[R] Polynomial R := by
+    have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+    have B := Module.finBasis R M
+    have : Fin (Module.finrank R M) → Polynomial R := fun x ↦ Polynomial.X
+
+    exact Basis.constr B R this
+
+
+def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
+             (r1 : Module.finrank R M = 1) [Nontrivial R]
+             : IsSymAlg (freeRkOneToPoly R mf r1) := {
+    ex_map := by
+      intro A rA aA φ
+      sorry
+  }
+
+
 
 
 /-
@@ -119,7 +145,23 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
          {RM RM' : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing RM'] [a : Algebra R RM']
          {iM : M →ₗ[R] RM} {iM' : M' →ₗ[R] RM'} (salg : IsSymAlg iM)
-         (salg : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' := sorry
+         (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →+* RM' :=
+    let φ : M →ₗ[R] RM' := iM'.comp phi
+    let f: RM →+* RM' := (salg.ex_map φ).exists.choose
+  { toFun := f
+    map_one' := f.map_one
+    map_mul' := f.map_mul
+    map_zero' := f.map_zero
+    map_add' := f.map_add }
+
+-- variable {R} {L} in
+-- structure IsSymAlg {RL : Type*}
+--               [CommRing RL] [a : Algebra R RL]
+--               (iota : L →ₗ[R] RL) : Prop where
+--   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
+--     : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+
+
 
 variable (I : Type*) (basis_I : Basis I R L)
 
