@@ -30,8 +30,7 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := by
   apply IsHomogeneousRelation.mk
   intro x y h n
   induction h with
-  | of h  => sorry
-
+  | of h => sorry
   | add_left _ _ => sorry
   | mul_left _ _ => sorry
   | mul_right _ _ => sorry
@@ -43,7 +42,18 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := by
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   apply IsHomogeneousRelation.mk
   rw [Equivalence.eqvGen_eq (Relation.EqvGen.is_equivalence rel)]
-  sorry
+  intro x y h
+  induction h with
+  | refl =>
+    exact fun i ↦ Quot.eqvGen_exact rfl
+  | symm x h_ih y j =>
+    exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) h_ih) (j i)
+  | trans j k h_ih₁ h_ih₂ h1 h2 h3 =>
+    exact fun i ↦
+      EqvGen.trans ((GradedRing.proj 𝒜 i) j) ((GradedRing.proj 𝒜 i) k) ((GradedRing.proj 𝒜 i) h_ih₁)
+        (h2 i) (h3 i)
+  | rel r s t=>
+    exact fun i ↦ IsHomogeneousRelation.is_homogeneous' t i
 
 instance : IsHomogeneousRelation 𝒜 (RingConGen.Rel rel) :=
   (RingQuot.eqvGen_rel_eq rel) ▸ inferInstance
@@ -53,9 +63,35 @@ end RingCon
 section GradedRing
 
 variable (𝒜 : ι → AddSubmonoid A) [GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
+#check RingQuot.mkRingHom rel
 
-instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) := by
-  sorry
+instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
+  --'one_mem', 'mul_mem', 'decompose'', 'left_inv', 'right_inv'
+  one_mem := by
+    use 1
+    constructor
+    · exact SetLike.GradedOne.one_mem
+    · exact map_one (RingQuot.mkRingHom rel)
+  mul_mem := by
+    intro x y gi gj hi hj
+    simp only [Function.comp_apply, Submodule.mem_map]
+    simp only [Function.comp_apply, Submodule.mem_map] at hj
+    simp only [Function.comp_apply, Submodule.mem_map] at hi
+    rcases hi with ⟨a, ha1, ha2⟩
+    rcases hj with ⟨b, hb1, hb2⟩
+    use a * b
+    constructor
+    · exact SetLike.GradedMul.mul_mem ha1 hb1
+    · simp only [map_mul]
+      exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
+  decompose' := sorry
+
+  left_inv := sorry
+
+  right_inv := sorry
+
+
+
 
 
 end GradedRing
@@ -65,7 +101,29 @@ section GradedAlgebra
 variable {R : Type*} [CommRing R] [Algebra R A]
 variable (𝒜 : ι → Submodule R A) [GradedAlgebra 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
 
-instance : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) := sorry
+instance : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
+  one_mem := by
+    use 1
+    constructor
+    · exact SetLike.GradedOne.one_mem
+    · exact map_one (RingQuot.mkAlgHom R rel)
+  mul_mem := by
+    intro x y gi gj hi hj
+    simp only [Function.comp_apply, Submodule.mem_map]
+    simp only [Function.comp_apply, Submodule.mem_map] at hj
+    simp only [Function.comp_apply, Submodule.mem_map] at hi
+    rcases hi with ⟨a, ha1, ha2⟩
+    rcases hj with ⟨b, hb1, hb2⟩
+    use a * b
+    constructor
+    · exact SetLike.GradedMul.mul_mem ha1 hb1
+    · simp only [map_mul]
+      exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
+  decompose' := sorry
+
+  left_inv := sorry
+
+  right_inv := sorry
 
 end GradedAlgebra
 
