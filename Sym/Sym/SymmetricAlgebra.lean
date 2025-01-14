@@ -32,7 +32,7 @@ structure IsSymAlg {RL : Type*}
               [CommRing RL] [a : Algebra R RL]
               (iota : L →ₗ[R] RL) : Prop where
   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
-    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ₗ iota
 
 
 
@@ -103,6 +103,19 @@ def lem2 : IsSymAlg (iota R L) := by
   sorry
 
 
+def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
+  (salg.ex_map phi).exists.choose
+
+
+theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
+
 /-
 Define a map from M to Polynomial R by sending e to x, where e is a generator for
 the module M. Then
@@ -131,24 +144,11 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
              : IsSymAlg (freeRkOneToPoly R mf r1) := {
     ex_map := by
       intro A rA aA φ
+
       sorry
   }
 
 
-
-
-def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
-         {RM : Type*}
-         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
-         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
-  (salg.ex_map phi).exists.choose
-
-
-theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
-         {RM : Type*}
-         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
-         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
-         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
   /-
   { toFun := f
     map_one' := f.map_one
