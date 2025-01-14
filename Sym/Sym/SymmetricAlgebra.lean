@@ -148,36 +148,47 @@ theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
          ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
 
-/-
-Define a map from M to Polynomial R by sending e to x, where e is a generator for
-the module M. Then
-use the universal property described in IsSymRel to lift this to a morphism from R[M]
-to Polynomial R.
 
-Then use Polynomial.aeval to construct an alegbra morphism from R[x] to R[M] sending
-x to ι(e). We then wish to show that this morphism and the morphism constructed in=
+def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
+  [Nontrivial R] (mf : Module.Free R M)
+  (r1 : Module.finrank R M = 1) : M →ₗ[R] Polynomial R :=
+    have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+    let B := Module.finBasis R M
+    Basis.constr B R (fun _ ↦ Polynomial.X)
+
+/-
+Use Polynomial.aeval to construct an alegbra morphism from Polynomial R to A sending
+x to φ(e), where is a . We then wish to show that this morphism and the morphism constructed in=
 the previous paragraph are inverses of one another
 
 You may need to use Polynomial.algHom_ext in order to prove things about equivalences
 between maps out of Polynomial R
 -/
-def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
-  [Nontrivial R] (mf : Module.Free R M)
-  (r1 : Module.finrank R M = 1) : M →ₗ[R] Polynomial R := by
-    have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
-    have B := Module.finBasis R M
-    have : Fin (Module.finrank R M) → Polynomial R := fun x ↦ Polynomial.X
-
-    exact Basis.constr B R this
-
-
 def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
              (r1 : Module.finrank R M = 1) [Nontrivial R]
              : IsSymAlg (freeRkOneToPoly R mf r1) := {
     ex_map := by
       intro A rA aA φ
+      have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+      have B := Module.finBasis R M
 
-      sorry
+      -- Take e to be the unique element of our basis B
+      let e : M := sorry
+
+
+      -- Use Polynomial.aeval to define a morphism φ' : Polynomial R →ₐ[R] A which
+      -- takes X and maps it to φ(e)
+      let φ' : Polynomial R →ₐ[R] A := sorry
+
+      use φ'
+      constructor
+      · simp
+        sorry
+      · intro g
+        simp
+        intro hg
+        -- Here, use Polynomial.algHom_ext to prove uniqueness
+        sorry
   }
 
 
