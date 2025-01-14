@@ -121,11 +121,21 @@ This says that the symmetric algebra over R of the zero module
 as an R algebra to R.
 -/
 def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
-  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) {inj : M →ₗ[R] RZ}
-  (salg : IsSymAlg inj) : RZ ≃ₐ[R] R := by
+  [AddCommMonoid M] [Module R M] (hm : Subsingleton M) : IsSymAlg (R := R) (L := M) (RL := R) 0 := {
+    ex_map := by
+      intro a b c φ
+
+      -- R is initial in the category of R-algebras, so this morphism is unique
+      let φ' : R →ₐ[R] a := sorry
+      use φ'
+      constructor
+      · -- Prove relation holds
+        sorry
+      · -- Prove uniqueness (should hold by definition)
+        sorry
+  }
 
 
-  sorry
 
 /-
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
