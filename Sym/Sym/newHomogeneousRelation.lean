@@ -119,6 +119,7 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
 
 
 
+
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   apply IsHomogeneousRelation.mk
   rw [Equivalence.eqvGen_eq (Relation.EqvGen.is_equivalence rel)]
@@ -126,14 +127,14 @@ instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   induction h with
   | refl =>
     exact fun i ↦ Quot.eqvGen_exact rfl
-  | symm x h_ih y j =>
-    exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) h_ih) (j i)
-  | trans j k h_ih₁ h_ih₂ h1 h2 h3 =>
+  | symm x y _ h1 =>
+    exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) y) (h1 i)
+  | trans j k l _ _ h2 h3 =>
     exact fun i ↦
-      EqvGen.trans ((GradedRing.proj 𝒜 i) j) ((GradedRing.proj 𝒜 i) k) ((GradedRing.proj 𝒜 i) h_ih₁)
+      EqvGen.trans ((GradedRing.proj 𝒜 i) j) ((GradedRing.proj 𝒜 i) k) ((GradedRing.proj 𝒜 i) l)
         (h2 i) (h3 i)
-  | rel r s t =>
-    exact fun i ↦ IsHomogeneousRelation.is_homogeneous' t i
+  | rel _ _ h4=>
+    exact fun i ↦ IsHomogeneousRelation.is_homogeneous' h4 i
 
 instance : IsHomogeneousRelation 𝒜 (RingConGen.Rel rel) :=
   (RingQuot.eqvGen_rel_eq rel) ▸ inferInstance
@@ -143,10 +144,11 @@ end RingCon
 section GradedRing
 
 variable (𝒜 : ι → AddSubmonoid A) [GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
-#check RingQuot.mkRingHom rel
+
+
+
 
 instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
-  --'one_mem', 'mul_mem', 'decompose'', 'left_inv', 'right_inv'
   one_mem := by
     use 1
     constructor
@@ -164,7 +166,8 @@ instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) wh
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · simp only [map_mul]
       exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
-  decompose' := sorry
+  decompose' := by
+   sorry
 
   left_inv := sorry
 
