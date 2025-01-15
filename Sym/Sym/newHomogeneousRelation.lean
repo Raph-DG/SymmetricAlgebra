@@ -104,7 +104,7 @@ lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [Decidabl
     · simp only [hx h, ZeroMemClass.coe_zero, mul_zero]
   simp only [Finset.mem_product, ite_self, this]
 
-lemma eqvGen_sum_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+theorem eqvGen_sum_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (a * c)) ((proj 𝒜 n) (b * c)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -122,19 +122,16 @@ lemma eqvGen_sum_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQ
     coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) b) _ hbS (Set.Subset.refl _)]
   let s : Finset (ι × ι) :=
     Finset.filter (fun ij ↦ ij.1 + ij.2 = n) (S ×ˢ DFinsupp.support ((DirectSum.decompose 𝒜) c))
-  have base : ∀ x ∈ s, EqvGen (RingQuot.Rel rel) (f x) (g x) :=
-    fun x _ => eqvGen_mul_left rel (h x.1)
-  have hom : ∀ (a b c d : A), EqvGen (RingQuot.Rel rel) a b →
-    EqvGen (RingQuot.Rel rel) c d → EqvGen (RingQuot.Rel rel) (a + c) (b + d) := by
-    intro _ _ _ _ hab hcd
+  apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
+  · intro _ _ _ _ hab hcd
     rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
     exact RingConGen.Rel.add hab hcd
-  have unit : EqvGen (RingQuot.Rel rel) 0 0 := by
-    rw [RingQuot.eqvGen_rel_eq]
+  · rw [RingQuot.eqvGen_rel_eq]
     exact RingConGen.Rel.refl 0
-  exact Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel)) hom unit base
+  · exact fun x _ => eqvGen_mul_left rel (h x.1)
 
-lemma eqvGen_sum_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+
+theorem eqvGen_sum_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (c * a)) ((proj 𝒜 n) (c * b)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -148,9 +145,17 @@ lemma eqvGen_sum_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQu
     simp only [Finset.subset_union_left, S]
   have hbS : DFinsupp.support ((DirectSum.decompose 𝒜) b) ⊆ S := by
     simp only [Finset.subset_union_right, S]
-
-  sorry
-
+  rw [coe_mul_sum_support_subset 𝒜  ((DirectSum.decompose 𝒜) c) ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) haS,
+    coe_mul_sum_support_subset 𝒜  ((DirectSum.decompose 𝒜) c) ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) hbS]
+  let s : Finset (ι × ι) :=
+    Finset.filter (fun ij ↦ ij.1 + ij.2 = n) (DFinsupp.support ((DirectSum.decompose 𝒜) c) ×ˢ S)
+  apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
+  · intro _ _ _ _ hab hcd
+    rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
+    exact RingConGen.Rel.add hab hcd
+  · rw [RingQuot.eqvGen_rel_eq]
+    exact RingConGen.Rel.refl 0
+  · exact fun x _ => eqvGen_mul_right rel (h x.2)
 
 variable [inst : IsHomogeneousRelation 𝒜 rel]
 
@@ -171,8 +176,6 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
   case mul_right c a b h_rel h =>
     intro n
     exact eqvGen_sum_mul_left 𝒜 rel n h⟩
-
-
 
 
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
