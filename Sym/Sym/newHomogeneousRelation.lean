@@ -31,45 +31,45 @@ lemma eqvGen_ringQuot_of_eqvGen {a b : A} (h : EqvGen rel a b) :
     EqvGen (RingQuot.Rel rel) a b :=
   Relation.EqvGen.mono (fun _ _ hab ↦ RingQuot.Rel.of hab) h
 
-lemma eqvGen_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-    EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
+lemma eqvGen_ringQuot_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
+  EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
   induction h with
   | rel x y hxy =>
-    apply EqvGen.rel
-    exact RingQuot.Rel.add_left hxy
+  apply EqvGen.rel
+  exact RingQuot.Rel.add_left hxy
   | refl x =>
-    exact Quot.eqvGen_exact rfl
+  exact Quot.eqvGen_exact rfl
   | symm x y h1 h2 =>
-    exact EqvGen.symm (x + c) (y + c) h2
+  exact EqvGen.symm (x + c) (y + c) h2
   | trans x y z _ _ h1 h2 =>
-    exact EqvGen.trans (x + c) (y + c) (z + c) h1 h2
+  exact EqvGen.trans (x + c) (y + c) (z + c) h1 h2
 
-lemma eqvGen_mul_left {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-    EqvGen (RingQuot.Rel rel) (a * c) (b * c) := by
+lemma eqvGen_ringQuot_mul_left {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
+  EqvGen (RingQuot.Rel rel) (a * c) (b * c) := by
   induction h with
   | rel x y hxy =>
-    apply EqvGen.rel
-    exact RingQuot.Rel.mul_left hxy
+  apply EqvGen.rel
+  exact RingQuot.Rel.mul_left hxy
   | refl x =>
-    exact Quot.eqvGen_exact rfl
+  exact Quot.eqvGen_exact rfl
   | symm x y h1 h2 =>
-    exact EqvGen.symm (x * c) (y * c) h2
+  exact EqvGen.symm (x * c) (y * c) h2
   | trans x y z _ _ h1 h2 =>
-    exact EqvGen.trans (x * c) (y * c) (z * c) h1 h2
+  exact EqvGen.trans (x * c) (y * c) (z * c) h1 h2
 
 
-lemma eqvGen_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-    EqvGen (RingQuot.Rel rel) (c * a) (c * b) := by
+lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
+  EqvGen (RingQuot.Rel rel) (c * a) (c * b) := by
   induction h with
   | rel x y hxy =>
-    apply EqvGen.rel
-    exact RingQuot.Rel.mul_right hxy
+  apply EqvGen.rel
+  exact RingQuot.Rel.mul_right hxy
   | refl x =>
-    exact Quot.eqvGen_exact rfl
+  exact Quot.eqvGen_exact rfl
   | symm x y h1 h2 =>
-    exact EqvGen.symm (c * x) (c * y) h2
+  exact EqvGen.symm (c * x) (c * y) h2
   | trans x y z _ _ h1 h2 =>
-    exact EqvGen.trans (c * x) (c * y) (c * z) h1 h2
+  exact EqvGen.trans (c * x) (c * y) (c * z) h1 h2
 
 
 
@@ -104,7 +104,7 @@ lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [Decidabl
     · simp only [hx h, ZeroMemClass.coe_zero, mul_zero]
   simp only [Finset.mem_product, ite_self, this]
 
-theorem eqvGen_sum_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (a * c)) ((proj 𝒜 n) (b * c)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -128,10 +128,10 @@ theorem eqvGen_sum_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Rin
     exact RingConGen.Rel.add hab hcd
   · rw [RingQuot.eqvGen_rel_eq]
     exact RingConGen.Rel.refl 0
-  · exact fun x _ => eqvGen_mul_left rel (h x.1)
+  · exact fun x _ => eqvGen_ringQuot_mul_left rel (h x.1)
 
 
-theorem eqvGen_sum_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+theorem eqvGen_proj_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (c * a)) ((proj 𝒜 n) (c * b)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -155,7 +155,7 @@ theorem eqvGen_sum_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Ring
     exact RingConGen.Rel.add hab hcd
   · rw [RingQuot.eqvGen_rel_eq]
     exact RingConGen.Rel.refl 0
-  · exact fun x _ => eqvGen_mul_right rel (h x.2)
+  · exact fun x _ => eqvGen_ringQuot_mul_right rel (h x.2)
 
 variable [inst : IsHomogeneousRelation 𝒜 rel]
 
@@ -169,13 +169,13 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
   case add_left a b c h_rel h =>
     intro n
     rw [map_add, map_add]
-    exact eqvGen_add_right rel (h n)
+    exact eqvGen_ringQuot_add_right rel (h n)
   case mul_left a b c h_rel h =>
     intro n
-    exact eqvGen_sum_mul_right 𝒜 rel n h
+    exact eqvGen_proj_mul_right 𝒜 rel n h
   case mul_right c a b h_rel h =>
     intro n
-    exact eqvGen_sum_mul_left 𝒜 rel n h⟩
+    exact eqvGen_proj_mul_left 𝒜 rel n h⟩
 
 
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
