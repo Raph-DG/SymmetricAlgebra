@@ -32,7 +32,7 @@ lemma eqvGen_ringQuot_of_eqvGen {a b : A} (h : EqvGen rel a b) :
   Relation.EqvGen.mono (fun _ _ hab ↦ RingQuot.Rel.of hab) h
 
 lemma eqvGen_ringQuot_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-  EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
+    EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
   induction h with
   | rel x y hxy =>
   apply EqvGen.rel
@@ -45,7 +45,7 @@ lemma eqvGen_ringQuot_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) 
   exact EqvGen.trans (x + c) (y + c) (z + c) h1 h2
 
 lemma eqvGen_ringQuot_mul_left {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-  EqvGen (RingQuot.Rel rel) (a * c) (b * c) := by
+    EqvGen (RingQuot.Rel rel) (a * c) (b * c) := by
   induction h with
   | rel x y hxy =>
   apply EqvGen.rel
@@ -59,7 +59,7 @@ lemma eqvGen_ringQuot_mul_left {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
 
 
 lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
-  EqvGen (RingQuot.Rel rel) (c * a) (c * b) := by
+    EqvGen (RingQuot.Rel rel) (c * a) (c * b) := by
   induction h with
   | rel x y hxy =>
   apply EqvGen.rel
@@ -78,7 +78,7 @@ noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x �
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
 lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α] {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M)
-  (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x))  :
+    (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x))  :
     r (∑ x ∈ s, f x) (∑ x ∈ s, g x) := by
   induction s using Finset.induction with
   | empty =>
@@ -89,9 +89,9 @@ lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α
 
 
 lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [DecidableEq ι] [Semiring R]
-  [SetLike σ R] [AddSubmonoidClass σ R] (A : ι → σ) [AddMonoid ι] [SetLike.GradedMonoid A]
-  [(i : ι) → (x : ↥(A i)) → Decidable (x ≠ 0)] (r r' : DirectSum ι fun i ↦ ↥(A i))
-  {S T: Finset ι} (hS : DFinsupp.support r ⊆ S) (hT : DFinsupp.support r' ⊆ T) (p : ι × ι → Prop) [DecidablePred p] :
+    [SetLike σ R] [AddSubmonoidClass σ R] (A : ι → σ) [AddMonoid ι] [SetLike.GradedMonoid A]
+    [(i : ι) → (x : ↥(A i)) → Decidable (x ≠ 0)] (r r' : DirectSum ι fun i ↦ ↥(A i))
+    {S T: Finset ι} (hS : DFinsupp.support r ⊆ S) (hT : DFinsupp.support r' ⊆ T) (p : ι × ι → Prop) [DecidablePred p] :
     ∑ ij ∈ Finset.filter p (DFinsupp.support r ×ˢ DFinsupp.support r'), ((r ij.1) * (r' ij.2) : R) =
     ∑ ij ∈ Finset.filter p (S ×ˢ T), ((r ij.1) * (r' ij.2) : R) := by
   rw [Finset.sum_filter, Finset.sum_filter]
@@ -145,8 +145,8 @@ theorem eqvGen_proj_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Rin
     simp only [Finset.subset_union_left, S]
   have hbS : DFinsupp.support ((DirectSum.decompose 𝒜) b) ⊆ S := by
     simp only [Finset.subset_union_right, S]
-  rw [coe_mul_sum_support_subset 𝒜  ((DirectSum.decompose 𝒜) c) ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) haS,
-    coe_mul_sum_support_subset 𝒜  ((DirectSum.decompose 𝒜) c) ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) hbS]
+  rw [coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) haS,
+    coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) hbS]
   let s : Finset (ι × ι) :=
     Finset.filter (fun ij ↦ ij.1 + ij.2 = n) (DFinsupp.support ((DirectSum.decompose 𝒜) c) ×ˢ S)
   apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
@@ -185,14 +185,14 @@ instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   induction h with
   | refl =>
     exact fun i ↦ Quot.eqvGen_exact rfl
-  | symm x h_ih y j =>
-    exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) h_ih) (j i)
-  | trans j k h_ih₁ h_ih₂ h1 h2 h3 =>
+  | symm x y _ h1 =>
+    exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) y) (h1 i)
+  | trans j k l _ _ h2 h3 =>
     exact fun i ↦
-      EqvGen.trans ((GradedRing.proj 𝒜 i) j) ((GradedRing.proj 𝒜 i) k) ((GradedRing.proj 𝒜 i) h_ih₁)
+      EqvGen.trans ((GradedRing.proj 𝒜 i) j) ((GradedRing.proj 𝒜 i) k) ((GradedRing.proj 𝒜 i) l)
         (h2 i) (h3 i)
-  | rel r s t =>
-    exact fun i ↦ IsHomogeneousRelation.is_homogeneous' t i
+  | rel _ _ h4=>
+    exact fun i ↦ IsHomogeneousRelation.is_homogeneous' h4 i
 
 instance : IsHomogeneousRelation 𝒜 (RingConGen.Rel rel) :=
   (RingQuot.eqvGen_rel_eq rel) ▸ inferInstance
@@ -214,16 +214,19 @@ instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) wh
   mul_mem := by
     intro x y gi gj hi hj
     simp only [Function.comp_apply, Submodule.mem_map]
-    simp only [Function.comp_apply, Submodule.mem_map] at hj
-    simp only [Function.comp_apply, Submodule.mem_map] at hi
     rcases hi with ⟨a, ha1, ha2⟩
     rcases hj with ⟨b, hb1, hb2⟩
     use a * b
     constructor
     · exact SetLike.GradedMul.mul_mem ha1 hb1
-    · simp only [map_mul]
+    · rw [map_mul]
       exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
-  decompose' := sorry
+  decompose' := by
+    intro h
+    simp only [Function.comp_apply]
+
+    sorry
+
 
   left_inv := sorry
 
@@ -258,7 +261,10 @@ instance : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) w
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · simp only [map_mul]
       exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
-  decompose' := sorry
+  decompose' := by
+    intro h
+
+    sorry
 
   left_inv := sorry
 
