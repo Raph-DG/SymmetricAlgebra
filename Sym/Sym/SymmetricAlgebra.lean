@@ -75,6 +75,7 @@ structure IsSymAlg {RL : Type*}
 local notation "𝔖" => SymmetricAlgebra
 
 
+
 namespace SymmetricAlgebra
 
 -- This is lemma 1
@@ -141,14 +142,25 @@ def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
 -/
-def lem2 : IsSymAlg (iota R L) := {
+def lem2 : IsSymAlg (iota R L) where
   ex_map := by
     intro alg com halg φ
     let tensorphi : TensorAlgebra R L →ₐ[R] alg := TensorAlgebra.lift R φ
 
     -- Define a morphism out of the symmetric algebra using RingQuot.lift
-    let φ' : SymmetricAlgebra R L →ₐ[R] alg := by
-      sorry
+    let φ' : SymmetricAlgebra R L →ₐ[R] alg :=
+      let ah := RingQuot.mkAlgHom R (SymRel R L)
+
+      let lifter := (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := alg)).toFun
+      --convert lifter
+
+
+
+      let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
+        sorry
+      lifter ⟨tensorphi, res⟩
+
+
 
     use φ'
     constructor
@@ -156,11 +168,22 @@ def lem2 : IsSymAlg (iota R L) := {
       sorry
     · -- Prove uniqueness
       sorry
-}
+
+
+/-
+Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
+have that RM and RM' are isomorphic
+-/
+def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
+         {RM RM' : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M →ₗ[R] RM'} (salg : IsSymAlg iM) (salg' : IsSymAlg iM')
+         : RM ≃ₐ[R] RM' := sorry
 
 
 
-def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
+
+def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
@@ -217,6 +240,7 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
   }
 
 
+
   /-
   { toFun := f
     map_one' := f.map_one
@@ -236,7 +260,19 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
          (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →ₐ[R] RM' :=
     IsSymAlg.lift R salg (iM'.comp phi)
 
+-- Define the natural map from RM₁ ⊗[R] RM₂ to RM defined
+open TensorProduct
+def lem6Map {M₁ M₂ : Type*}
+            [AddCommMonoid M₁] [Module R M₁]
+            [AddCommMonoid M₂] [Module R M₂]
+         {RM RM₁ RM₂ : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM₁] [Algebra R RM₁]
+         [CommRing RM₂] [Algebra R RM₂]
+         {iM : M₁ × M₂ →ₗ[R] RM} {iM₁ : M₁ →ₗ[R] RM₁} {iM₂ : M₂ →ₗ[R] RM₂}
+         (salg : IsSymAlg iM) (salg₁ : IsSymAlg iM₁) (salg₂ : IsSymAlg iM₂)
+         : RM₁ ⊗[R] RM₂ →ₐ[R] RM :=
 
+    sorry
 -- variable {R} {L} in
 -- structure IsSymAlg {RL : Type*}
 --               [CommRing RL] [a : Algebra R RL]
@@ -247,6 +283,19 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
 
 
 variable (I : Type*) (basis_I : Basis I R L)
+
+def basisToPoly : L →ₗ[R] MvPolynomial I R :=
+    Basis.constr basis_I R (fun i ↦ MvPolynomial.X i)
+
+/-
+This should be a more conceptual version of the proof below
+-/
+def cor1 : IsSymAlg (basisToPoly R L I basis_I) := {
+  ex_map := by
+
+    sorry
+}
+
 
 def symmetric_algebra_iso_mv_polynomial : MvPolynomial I R ≃ₐ[R] 𝔖 R L :=
   AlgEquiv.ofAlgHom
