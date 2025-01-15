@@ -351,11 +351,24 @@ def basisToPoly : L →ₗ[R] MvPolynomial I R :=
 /-
 This should be a more conceptual version of the proof below
 -/
-def cor1 : IsSymAlg (basisToPoly R L I basis_I) := {
+def cor1 : IsSymAlg (basisToPoly R L I basis_I) where
   ex_map := by
+    intro alg b c φ
+    simp[basisToPoly]
 
-    sorry
-}
+    use MvPolynomial.aeval (R := R) (fun i => φ (basis_I i))
+    constructor
+    · apply Basis.ext basis_I
+      intro i
+      simp
+
+    · simp
+      intro f hf
+      apply MvPolynomial.algHom_ext
+      intro i
+      simp
+      -- Should be very simple to prove this
+      sorry
 
 
 def symmetric_algebra_iso_mv_polynomial : MvPolynomial I R ≃ₐ[R] 𝔖 R L :=
