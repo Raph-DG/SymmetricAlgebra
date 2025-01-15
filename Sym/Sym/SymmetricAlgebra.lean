@@ -148,38 +148,21 @@ def lem2 : IsSymAlg (iota R L) where
     let tensorphi : TensorAlgebra R L →ₐ[R] alg := TensorAlgebra.lift R φ
 
     -- Define a morphism out of the symmetric algebra using RingQuot.lift
-    let φ' : SymmetricAlgebra R L →ₐ[R] alg :=
-      let ah := RingQuot.mkAlgHom R (SymRel R L)
-
-      let lifter := (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := alg)).toFun
-      --convert lifter
-
-
-
-      let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
+    let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
         sorry
-      lifter ⟨tensorphi, res⟩
 
-
-
-    use φ'
+    use (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := alg)) ⟨TensorAlgebra.lift R φ, res⟩
     constructor
-    · -- Prove existence
-      sorry
-    · -- Prove uniqueness
-      sorry
-
-
-/-
-Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
-have that RM and RM' are isomorphic
--/
-def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
-         {RM RM' : Type*}
-         [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
-         {iM : M →ₗ[R] RM} {iM' : M →ₗ[R] RM'} (salg : IsSymAlg iM) (salg' : IsSymAlg iM')
-         : RM ≃ₐ[R] RM' := sorry
-
+    · unfold iota
+      have teneq := TensorAlgebra.lift.eq_1 (M := L) (A := alg) R
+      have quoteq := RingQuot.eq_liftAlgHom_comp_mkAlgHom R (TensorAlgebra.lift R φ)
+      ext a
+      simp
+    · intro a b
+      apply RingQuot.liftAlgHom_unique
+      exact
+        (TensorAlgebra.lift_unique φ (a.comp (RingQuot.mkAlgHom R (SymRel R L)))).mp
+          (id (Eq.symm b))
 
 
 
@@ -188,13 +171,39 @@ def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
   (salg.ex_map phi).exists.choose
+/-
+Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
+have that RM and RM' are isomorphic
+-/
+def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
+         {RM RM' : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M →ₗ[R] RM'} (salg : IsSymAlg iM) (salg' : IsSymAlg iM')
+         : RM ≃ₐ[R] RM' where
+    toFun : RM →ₐ[R] RM' := IsSymAlg.lift R salg iM'
+    invFun : RM' →ₐ[R] RM := IsSymAlg.lift R salg' iM
+    -- Prove these properties using the universal property
+    left_inv := sorry
+    right_inv := sorry
+    map_mul' := sorry
+    map_add' := sorry
+    commutes' := sorry
+
+
+
+
+
+
+
+
 
 
 theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
-         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi :=
+         sorry
 
 
 def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
