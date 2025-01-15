@@ -50,7 +50,6 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
       have h_zeroh : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by exact h_zero i h0
       have h_zeroh' : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by exact h_zero' i h0
       rw [h_zeroh, h_zeroh']
-      have : SymRel R L (ι x * ι x) (ι x * ι x) := by exact SymRel.mul_comm x x
       have zero : 0 = (ι (0 : L) * ι (0 : L)) := by simp only [map_zero, mul_zero]
       rw [zero]
       exact SymRel.mul_comm 0 0
@@ -149,7 +148,11 @@ def lem2 : IsSymAlg (iota R L) where
 
     -- Define a morphism out of the symmetric algebra using RingQuot.lift
     let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
-        sorry
+        intro x y h
+        induction h
+        case mul_comm x y =>
+          simp only [map_mul]
+          rw [@NonUnitalCommSemiring.mul_comm]
 
     use (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := alg)) ⟨TensorAlgebra.lift R φ, res⟩
     constructor
@@ -212,8 +215,9 @@ def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
     have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
     let B := Module.finBasis R M
     Basis.constr B R (fun _ ↦ Polynomial.X)
-
 /-
+
+
 Use Polynomial.aeval to construct an alegbra morphism from Polynomial R to A sending
 x to φ(e), where is a . We then wish to show that this morphism and the morphism constructed in=
 the previous paragraph are inverses of one another
@@ -227,28 +231,77 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
     ex_map := by
       intro A rA aA φ
       have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
-      have B := Module.finBasis R M
-
+      let B := Module.finBasis R M
       -- Take e to be the unique element of our basis B
-      let e : M := sorry
 
-
+      let idx : Fin (Module.finrank R M) := Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one)
+      let e : M := B idx
       -- Use Polynomial.aeval to define a morphism φ' : Polynomial R →ₐ[R] A which
       -- takes X and maps it to φ(e)
-      let φ' : Polynomial R →ₐ[R] A := sorry
+      let φ' : Polynomial R →ₐ[R] A := Polynomial.aeval (φ e)
 
       use φ'
       constructor
-      · simp
-        sorry
+      · simp only
+        have (x : M) : ∃ (y : R), x = y • e := by
+          use (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))
+          rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
+          · simp only [map_smul, Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
+            Finsupp.single_eq_same]
+          · intro i hi1 hi2
+            have this :  i = idx := by
+              have : Fintype.card (Fin (Module.finrank R M)) ≤ 1 := by
+                simp only [Fintype.card_fin]
+                exact Nat.le_of_eq r1
+              apply Fintype.card_le_one_iff.mp this
+            have this' : i ≠ idx := by exact hi2
+            contradiction
+          · intro h
+            refine smul_eq_zero_of_right ((B.repr x) ⟨0, Eq.mpr (id (congrArg (fun _a ↦ 0 < _a) r1)) Nat.zero_lt_one⟩) ?_
+            apply Basis.apply_eq_iff.mpr
+            simp only [map_zero]
+            sorry
+          -- have : (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one)) = 1 := by
+          --   rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
+          --   · simp only
+
+
+          --     have this' : i ≠ idx := by exact hi2
+          --     contradiction
+
+        rw [@LinearMap.ext_iff]
+        intro x
+        specialize this x
+        rcases this with ⟨y, hy⟩
+        rw [hy]
+        simp only [map_smul, LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+          Function.comp_apply]
+        have: φ e = φ' ((freeRkOneToPoly R mf r1) e) := by
+          have : Polynomial.X = (freeRkOneToPoly R mf r1) e := by
+            unfold freeRkOneToPoly
+            simp only [Polynomial.aeval_X]
+            exact Eq.symm (Basis.constr_basis (Module.finBasis R M) R (fun x ↦ Polynomial.X) idx)
+          rw [←this]
+          exact Eq.symm (Polynomial.aeval_X (φ e))
+        rw [this]
+
       · intro g
         simp
         intro hg
         -- Here, use Polynomial.algHom_ext to prove uniqueness
-        sorry
+        apply Polynomial.algHom_ext
+        have : φ' Polynomial.X = φ e := by exact Polynomial.aeval_X (φ e)
+        have this': g Polynomial.X = φ e := by
+          rw [hg]
+          simp only [LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+            Function.comp_apply]
+          apply AlgHom.congr_arg
+          have : (freeRkOneToPoly R mf r1) e = Basis.constr B R (fun _ ↦ Polynomial.X) e := by
+            simp [freeRkOneToPoly, Basis.constr]
+          rw [this]
+          exact Eq.symm (Basis.constr_basis B R (fun x ↦ Polynomial.X) idx)
+        rw [this, this']
   }
-
-
 
   /-
   { toFun := f
@@ -256,7 +309,6 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
     map_mul' := f.map_mul
     map_zero' := f.map_zero
     map_add' := f.map_add }-/
-
 
 /-
 Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
