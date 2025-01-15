@@ -50,7 +50,6 @@ instance : IsHomogeneousRelation (fun (n : ℕ) ↦ (LinearMap.range (ι : L →
       have h_zeroh : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι x * ι y)) = 0 := by exact h_zero i h0
       have h_zeroh' : (GradedRing.proj (fun (n : ℕ) ↦ (LinearMap.range (ι : L →ₗ[R] TensorAlgebra R L) ^ n)) i (ι y * ι x)) = 0 := by exact h_zero' i h0
       rw [h_zeroh, h_zeroh']
-      have : SymRel R L (ι x * ι x) (ι x * ι x) := by exact SymRel.mul_comm x x
       have zero : 0 = (ι (0 : L) * ι (0 : L)) := by simp only [map_zero, mul_zero]
       rw [zero]
       exact SymRel.mul_comm 0 0
@@ -73,6 +72,7 @@ structure IsSymAlg {RL : Type*}
 
 
 local notation "𝔖" => SymmetricAlgebra
+
 
 
 namespace SymmetricAlgebra
@@ -141,37 +141,72 @@ def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
 -/
-def lem2 : IsSymAlg (iota R L) := {
+def lem2 : IsSymAlg (iota R L) where
   ex_map := by
     intro alg com halg φ
     let tensorphi : TensorAlgebra R L →ₐ[R] alg := TensorAlgebra.lift R φ
 
     -- Define a morphism out of the symmetric algebra using RingQuot.lift
-    let φ' : SymmetricAlgebra R L →ₐ[R] alg := by
-      sorry
+    let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
+        intro x y h
+        induction h
+        case mul_comm x y =>
+          simp only [map_mul]
+          rw [@NonUnitalCommSemiring.mul_comm]
 
-    use φ'
+    use (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := alg)) ⟨TensorAlgebra.lift R φ, res⟩
     constructor
-    · -- Prove existence
-      sorry
-    · -- Prove uniqueness
-      sorry
-}
+    · unfold iota
+      have teneq := TensorAlgebra.lift.eq_1 (M := L) (A := alg) R
+      have quoteq := RingQuot.eq_liftAlgHom_comp_mkAlgHom R (TensorAlgebra.lift R φ)
+      ext a
+      simp
+    · intro a b
+      apply RingQuot.liftAlgHom_unique
+      exact
+        (TensorAlgebra.lift_unique φ (a.comp (RingQuot.mkAlgHom R (SymRel R L)))).mp
+          (id (Eq.symm b))
 
 
 
-def IsSymAlg.lift  {M M' : Type*} [AddCommMonoid M] [Module R M]
+def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
   (salg.ex_map phi).exists.choose
+/-
+Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
+have that RM and RM' are isomorphic
+-/
+def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
+         {RM RM' : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M →ₗ[R] RM'} (salg : IsSymAlg iM) (salg' : IsSymAlg iM')
+         : RM ≃ₐ[R] RM' where
+    toFun : RM →ₐ[R] RM' := IsSymAlg.lift R salg iM'
+    invFun : RM' →ₐ[R] RM := IsSymAlg.lift R salg' iM
+    -- Prove these properties using the universal property
+    left_inv := sorry
+    right_inv := sorry
+    map_mul' := sorry
+    map_add' := sorry
+    commutes' := sorry
+
+
+
+
+
+
+
+
 
 
 theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
-         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := sorry
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi :=
+         sorry
 
 
 def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
@@ -180,8 +215,9 @@ def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
     have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
     let B := Module.finBasis R M
     Basis.constr B R (fun _ ↦ Polynomial.X)
-
 /-
+
+
 Use Polynomial.aeval to construct an alegbra morphism from Polynomial R to A sending
 x to φ(e), where is a . We then wish to show that this morphism and the morphism constructed in=
 the previous paragraph are inverses of one another
@@ -195,27 +231,77 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
     ex_map := by
       intro A rA aA φ
       have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
-      have B := Module.finBasis R M
-
+      let B := Module.finBasis R M
       -- Take e to be the unique element of our basis B
-      let e : M := sorry
 
-
+      let idx : Fin (Module.finrank R M) := Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one)
+      let e : M := B idx
       -- Use Polynomial.aeval to define a morphism φ' : Polynomial R →ₐ[R] A which
       -- takes X and maps it to φ(e)
-      let φ' : Polynomial R →ₐ[R] A := sorry
+      let φ' : Polynomial R →ₐ[R] A := Polynomial.aeval (φ e)
 
       use φ'
       constructor
-      · simp
-        sorry
+      · simp only
+        have (x : M) : ∃ (y : R), x = y • e := by
+          use (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))
+          rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
+          · simp only [map_smul, Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
+            Finsupp.single_eq_same]
+          · intro i hi1 hi2
+            have this :  i = idx := by
+              have : Fintype.card (Fin (Module.finrank R M)) ≤ 1 := by
+                simp only [Fintype.card_fin]
+                exact Nat.le_of_eq r1
+              apply Fintype.card_le_one_iff.mp this
+            have this' : i ≠ idx := by exact hi2
+            contradiction
+          · intro h
+            refine smul_eq_zero_of_right ((B.repr x) ⟨0, Eq.mpr (id (congrArg (fun _a ↦ 0 < _a) r1)) Nat.zero_lt_one⟩) ?_
+            apply Basis.apply_eq_iff.mpr
+            simp only [map_zero]
+            sorry
+          -- have : (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one)) = 1 := by
+          --   rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
+          --   · simp only
+
+
+          --     have this' : i ≠ idx := by exact hi2
+          --     contradiction
+
+        rw [@LinearMap.ext_iff]
+        intro x
+        specialize this x
+        rcases this with ⟨y, hy⟩
+        rw [hy]
+        simp only [map_smul, LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+          Function.comp_apply]
+        have: φ e = φ' ((freeRkOneToPoly R mf r1) e) := by
+          have : Polynomial.X = (freeRkOneToPoly R mf r1) e := by
+            unfold freeRkOneToPoly
+            simp only [Polynomial.aeval_X]
+            exact Eq.symm (Basis.constr_basis (Module.finBasis R M) R (fun x ↦ Polynomial.X) idx)
+          rw [←this]
+          exact Eq.symm (Polynomial.aeval_X (φ e))
+        rw [this]
+
       · intro g
         simp
         intro hg
         -- Here, use Polynomial.algHom_ext to prove uniqueness
-        sorry
+        apply Polynomial.algHom_ext
+        have : φ' Polynomial.X = φ e := by exact Polynomial.aeval_X (φ e)
+        have this': g Polynomial.X = φ e := by
+          rw [hg]
+          simp only [LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+            Function.comp_apply]
+          apply AlgHom.congr_arg
+          have : (freeRkOneToPoly R mf r1) e = Basis.constr B R (fun _ ↦ Polynomial.X) e := by
+            simp [freeRkOneToPoly, Basis.constr]
+          rw [this]
+          exact Eq.symm (Basis.constr_basis B R (fun x ↦ Polynomial.X) idx)
+        rw [this, this']
   }
-
 
   /-
   { toFun := f
@@ -223,7 +309,6 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
     map_mul' := f.map_mul
     map_zero' := f.map_zero
     map_add' := f.map_add }-/
-
 
 /-
 Functoriality: Take iM' ∘ phi to get a map from M to R[M'], then use the universal
@@ -236,7 +321,19 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
          (salg' : IsSymAlg iM') (phi : M →ₗ[R] M') : RM →ₐ[R] RM' :=
     IsSymAlg.lift R salg (iM'.comp phi)
 
+-- Define the natural map from RM₁ ⊗[R] RM₂ to RM defined
+open TensorProduct
+def lem6Map {M₁ M₂ : Type*}
+            [AddCommMonoid M₁] [Module R M₁]
+            [AddCommMonoid M₂] [Module R M₂]
+         {RM RM₁ RM₂ : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM₁] [Algebra R RM₁]
+         [CommRing RM₂] [Algebra R RM₂]
+         {iM : M₁ × M₂ →ₗ[R] RM} {iM₁ : M₁ →ₗ[R] RM₁} {iM₂ : M₂ →ₗ[R] RM₂}
+         (salg : IsSymAlg iM) (salg₁ : IsSymAlg iM₁) (salg₂ : IsSymAlg iM₂)
+         : RM₁ ⊗[R] RM₂ →ₐ[R] RM :=
 
+    sorry
 -- variable {R} {L} in
 -- structure IsSymAlg {RL : Type*}
 --               [CommRing RL] [a : Algebra R RL]
@@ -247,6 +344,19 @@ def lem5 {M M' : Type*} [AddCommMonoid M] [Module R M] [AddCommMonoid M'] [Modul
 
 
 variable (I : Type*) (basis_I : Basis I R L)
+
+def basisToPoly : L →ₗ[R] MvPolynomial I R :=
+    Basis.constr basis_I R (fun i ↦ MvPolynomial.X i)
+
+/-
+This should be a more conceptual version of the proof below
+-/
+def cor1 : IsSymAlg (basisToPoly R L I basis_I) := {
+  ex_map := by
+
+    sorry
+}
+
 
 def symmetric_algebra_iso_mv_polynomial : MvPolynomial I R ≃ₐ[R] 𝔖 R L :=
   AlgEquiv.ofAlgHom
