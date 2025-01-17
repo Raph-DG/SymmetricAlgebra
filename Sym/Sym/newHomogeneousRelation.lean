@@ -29,7 +29,7 @@ open Relation GradedRing
 
 lemma eqvGen_ringQuot_of_eqvGen {a b : A} (h : EqvGen rel a b) :
     EqvGen (RingQuot.Rel rel) a b :=
-  Relation.EqvGen.mono (fun _ _ hab ↦ RingQuot.Rel.of hab) h
+  Relation.EqvGen.mono (fun _ _ h' ↦ RingQuot.Rel.of h') h
 
 lemma eqvGen_ringQuot_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
     EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
@@ -77,6 +77,8 @@ lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) 
 noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
+
+
 lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α] {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M)
     (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x))  :
     r (∑ x ∈ s, f x) (∑ x ∈ s, g x) := by
@@ -98,11 +100,11 @@ lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [Decidabl
   apply Finset.sum_subset (Finset.product_subset_product hS hT)
   intro x _ hx
   simp only [Finset.mem_product, DFinsupp.mem_support_toFun, ne_eq, not_and, not_not] at hx
-  have : (↑(r x.1) * ↑(r' x.2) : R) = 0 := by
+  have : ((r x.1) * (r' x.2) : R) = 0 := by
     by_cases h : r x.1 = 0
     · simp only [h, ZeroMemClass.coe_zero, zero_mul]
     · simp only [hx h, ZeroMemClass.coe_zero, mul_zero]
-  simp only [Finset.mem_product, ite_self, this]
+  simp only [this, ite_self]
 
 theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (a * c)) ((proj 𝒜 n) (b * c)) := by
@@ -112,16 +114,8 @@ theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Ri
     fun ij ↦ ↑(((DirectSum.decompose 𝒜) a) ij.1) * ↑(((DirectSum.decompose 𝒜) c) ij.2)
   let g : ι × ι → A :=
     fun ij ↦ ↑(((DirectSum.decompose 𝒜) b) ij.1) * ↑(((DirectSum.decompose 𝒜) c) ij.2)
-  let S : Finset ι :=
-    DFinsupp.support ((DirectSum.decompose 𝒜) a) ∪ DFinsupp.support ((DirectSum.decompose 𝒜) b)
-  have haS : DFinsupp.support ((DirectSum.decompose 𝒜) a) ⊆ S := by
-    simp only [Finset.subset_union_left, S]
-  have hbS : DFinsupp.support ((DirectSum.decompose 𝒜) b) ⊆ S := by
-    simp only [Finset.subset_union_right, S]
-  rw [coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) a) _ haS (Set.Subset.refl _),
-    coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) b) _ hbS (Set.Subset.refl _)]
-  let s : Finset (ι × ι) :=
-    Finset.filter (fun ij ↦ ij.1 + ij.2 = n) (S ×ˢ DFinsupp.support ((DirectSum.decompose 𝒜) c))
+  rw [coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) a) _ Finset.subset_union_left (Set.Subset.refl _),
+    coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) b) _ Finset.subset_union_right (Set.Subset.refl _)]
   apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
   · intro _ _ _ _ hab hcd
     rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
@@ -139,16 +133,8 @@ theorem eqvGen_proj_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Rin
     fun ij ↦ ↑(((DirectSum.decompose 𝒜) c) ij.1) * ↑(((DirectSum.decompose 𝒜) a) ij.2)
   let g : ι × ι → A :=
     fun ij ↦ ↑(((DirectSum.decompose 𝒜) c) ij.1) * ↑(((DirectSum.decompose 𝒜) b) ij.2)
-  let S : Finset ι :=
-    DFinsupp.support ((DirectSum.decompose 𝒜) a) ∪ DFinsupp.support ((DirectSum.decompose 𝒜) b)
-  have haS : DFinsupp.support ((DirectSum.decompose 𝒜) a) ⊆ S := by
-    simp only [Finset.subset_union_left, S]
-  have hbS : DFinsupp.support ((DirectSum.decompose 𝒜) b) ⊆ S := by
-    simp only [Finset.subset_union_right, S]
-  rw [coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) haS,
-    coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) hbS]
-  let s : Finset (ι × ι) :=
-    Finset.filter (fun ij ↦ ij.1 + ij.2 = n) (DFinsupp.support ((DirectSum.decompose 𝒜) c) ×ˢ S)
+  rw [coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) Finset.subset_union_left,
+    coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) Finset.subset_union_right]
   apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
   · intro _ _ _ _ hab hcd
     rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
@@ -220,12 +206,13 @@ instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) wh
     constructor
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · rw [map_mul]
-      exact Mathlib.Tactic.LinearCombination'.mul_pf ha2 hb2
+      simp only [ha2, hb2]
   decompose' := by
     intro h
     simp only [Function.comp_apply]
-
     sorry
+
+
 
 
   left_inv := sorry
