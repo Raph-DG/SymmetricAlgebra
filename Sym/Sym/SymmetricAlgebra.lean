@@ -135,8 +135,6 @@ def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
         sorry
   }
 
-
-
 /-
 Use TensorAlgebra.lift and RingQuot.lift for existence and TensorAlgebra.lift_unique
 for uniqueness
@@ -169,7 +167,7 @@ def lem2 : IsSymAlg (iota R L) where
 
 
 
-def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
+ def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
@@ -200,9 +198,12 @@ def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
         simp only [Function.comp_apply, LinearMap.coe_comp, LieHom.coe_toLinearMap,
           AlgHom.coe_toLieHom, CompTriple.comp_eq]
       rw [← Function.comp_assoc] at h3
-      --have h4 : φ' ∘ φ = IsSymAlg.lift R salg' iM' := by sorry
+      /- You need to show that φ' ∘ φ is the ex_map of iM. But the salg iM dosen't accept a RM → RM--a map from type 1 to type 1 itself.
+      -/
       sorry
-
+      --apply ((@salg'.ex_map RM' _ _ iM' AlgHom.id).exists.choose_spec).symm
+      --let unique := (salg.ex_map iM').unique
+      --have h3 := (Classical.choose_spec (@salg.ex_map _ _ _ _ _ _ RM _ iM))
 
     right_inv := sorry
     map_mul' := by simp only [map_mul, implies_true]
@@ -222,11 +223,7 @@ theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
-         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := by
-  let φ' := (salg.ex_map phi).exists.choose
-  have : φ' = (IsSymAlg.lift R salg phi) := by
-    exact rfl
-  sorry
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := ((salg.ex_map phi).exists.choose_spec).symm
 
 
 def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
@@ -245,26 +242,7 @@ the previous paragraph are inverses of one another
 You may need to use Polynomial.algHom_ext in order to prove things about equivalences
 between maps out of Polynomial R
 -/
-/-
-  A lemma  that in a Module R M, if R is nontrivial and M is free of rank 1, ∀ x ∈ M , ∃ y ∈ R, x = y • e, e is the unique element of the basis of M ,which will be used in the proof of Lemma3.(To replace "have (x : M) : ∃ (y : R), x = y • e")
-theorem Module.multiple_of_basis_of_finrank_eq_one {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M) (r1 : Module.finrank R M = 1) [Nontrivial R] : ∃(e : M), (Basis.singleton Unit R M e) ∧ ∀ (x : M), ∃ (y : R), x = y • e := by
-  use (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))
-  rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
-  · simp only [map_smul, Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
-    Finsupp.single_eq_same]
-  · intro i hi1 hi2
-    have this :  i = idx := by
-      have : Fintype.card (Fin (Module.finrank R M)) ≤ 1 := by
-        simp only [Fintype.card_fin]
-        exact Nat.le_of_eq r1
-      apply Fintype.card_le_one_iff.mp this
-    have this' : i ≠ idx := by exact hi2
-    contradiction
-  · intro h
-    have : idx ∈ Finset.univ := by
-      simp only [Finset.mem_univ]
-    exact False.elim (h this)
--/
+
 
 def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
              (r1 : Module.finrank R M = 1) [Nontrivial R]
@@ -357,15 +335,29 @@ def lem6Map {M₁ M₂ : Type*}
          [CommRing RM₂] [Algebra R RM₂]
          {iM : M₁ × M₂ →ₗ[R] RM} {iM₁ : M₁ →ₗ[R] RM₁} {iM₂ : M₂ →ₗ[R] RM₂}
          (salg : IsSymAlg iM) (salg₁ : IsSymAlg iM₁) (salg₂ : IsSymAlg iM₂)
-         : RM₁ ⊗[R] RM₂ →ₐ[R] RM :=
+         : RM₁ ⊗[R] RM₂ →ₐ[R] RM := by
+  let φ₁ : M₁ →ₗ[R] RM := LinearMap.comp iM (LinearMap.prod LinearMap.id 0)
+  let φ₂ : M₂ →ₗ[R] RM := LinearMap.comp iM (LinearMap.prod 0 LinearMap.id)
 
-    sorry
--- variable {R} {L} in
--- structure IsSymAlg {RL : Type*}
---               [CommRing RL] [a : Algebra R RL]
---               (iota : L →ₗ[R] RL) : Prop where
---   ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
---     : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ iota
+  let φ₁_alg : RM₁ →ₐ[R] RM := (salg₁.ex_map φ₁).exists.choose
+  let φ₂_alg : RM₂ →ₐ[R] RM := (salg₂.ex_map φ₂).exists.choose
+
+  let bilin_map : RM₁ →ₗ[R] RM₂ →ₗ[R] RM := by
+    refine LinearMap.mk₂ R (fun x y => φ₁_alg x * φ₂_alg y) ?_ ?_ ?_ ?_
+    · intros x y z
+      simp only [map_add]
+      exact RightDistribClass.right_distrib (φ₁_alg x) (φ₁_alg y) (φ₂_alg z)
+    · intros r x y
+      simp [Algebra.smul_def, mul_assoc]
+    · intros x y z
+      simp [add_mul]
+      exact LeftDistribClass.left_distrib (φ₁_alg x) (φ₂_alg y) (φ₂_alg z)
+    · intros r x y
+      simp [Algebra.smul_def, mul_assoc]
+      exact Algebra.left_comm (φ₁_alg x) r (φ₂_alg y)
+  let lin_map : RM₁ ⊗[R] RM₂ →ₗ[R] RM := TensorProduct.lift bilin_map
+  exact Algebra.TensorProduct.productMap φ₁_alg φ₂_alg
+
 
 
 
@@ -424,4 +416,19 @@ abbrev gradingSymmetricAlgebra : ℕ → Submodule R (𝔖 R L) :=
 #synth GradedAlgebra (gradingSymmetricAlgebra R L)
 
 lemma proj_comm (x : TensorAlgebra R L) (m : ℕ) : mkAlgHom R L ((GradedAlgebra.proj ((LinearMap.range (TensorAlgebra.ι R : L →ₗ[R] TensorAlgebra R L) ^ ·)) m) x) = (GradedAlgebra.proj (gradingSymmetricAlgebra R L) m) (mkAlgHom R L x) := by
-  sorry
+  unfold mkAlgHom
+  unfold GradedAlgebra.proj
+  simp only [AlgEquiv.toAlgHom_eq_coe, AlgEquiv.toAlgHom_toLinearMap, LinearMap.coe_comp,
+    Submodule.coe_subtype, Function.comp_apply, DFinsupp.lapply_apply]
+  induction x using TensorAlgebra.induction
+  case algebraMap r =>
+    simp only [AlgHom.commutes]
+    sorry
+  case mul a b ha hb =>
+    simp only [map_mul]
+    sorry
+  case add a b ha hb =>
+    simp only [map_add, DFinsupp.coe_add, Pi.add_apply, Submodule.coe_add]
+    exact Mathlib.Tactic.LinearCombination.add_eq_eq ha hb
+  case _ x =>
+    sorry
