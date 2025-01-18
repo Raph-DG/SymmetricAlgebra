@@ -124,15 +124,18 @@ def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
   [AddCommMonoid M] [Module R M] (hm : Subsingleton M) : IsSymAlg (R := R) (L := M) (RL := R) 0 := {
     ex_map := by
       intro a b c φ
-
+      have hφ : φ = 0 := by exact Subsingleton.eq_zero φ
       -- R is initial in the category of R-algebras, so this morphism is unique
-      let φ' : R →ₐ[R] a := sorry
+      let φ' : R →ₐ[R] a := Algebra.ofId R a
       use φ'
       constructor
       · -- Prove relation holds
-        sorry
+        rw [hφ]
+        ext x
+        simp only [LinearMap.zero_apply, LinearMap.comp_zero]
       · -- Prove uniqueness (should hold by definition)
-        sorry
+         intro ψ hψ
+         exact Algebra.ext_id_iff.mpr trivial
   }
 
 /-
@@ -173,7 +176,6 @@ def lem2 : IsSymAlg (iota R L) where
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
   (salg.ex_map phi).exists.choose
 
-
 /-
 Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
 have that RM and RM' are isomorphic
@@ -198,7 +200,7 @@ def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
         simp only [Function.comp_apply, LinearMap.coe_comp, LieHom.coe_toLinearMap,
           AlgHom.coe_toLieHom, CompTriple.comp_eq]
       rw [← Function.comp_assoc] at h3
-      /- You need to show that φ' ∘ φ is the ex_map of iM. But the salg iM dosen't accept a RM → RM--a map from type 1 to type 1 itself.
+      /- You need to show that φ' ∘ φ is the ex_map of iM. But the salg iM dosen't accept  RM → RM--a map from type 1 to type 1 itself.
       -/
       sorry
       --apply ((@salg'.ex_map RM' _ _ iM' AlgHom.id).exists.choose_spec).symm
