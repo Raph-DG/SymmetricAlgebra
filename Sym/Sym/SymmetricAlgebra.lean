@@ -1,5 +1,6 @@
 import Mathlib
 import Sym.newHomogeneousRelation
+import Aesop
 
 open MvPolynomial RingQuot
 
@@ -62,9 +63,9 @@ variable {R} {L} in
 structure IsSymAlg {RL : Type*}
               [CommRing RL] [a : Algebra R RL]
               (iota : L →ₗ[R] RL) : Prop where
-  ex_map {A : Type*} [CommRing A] [a : Algebra R A] (φ : L →ₗ[R] A)
-    : ∃! φ' : RL →ₐ[R] A, φ = φ' ∘ₗ iota
-
+  ex_map {A : Type*} [CommRing A] [Algebra R A] (φ : L →ₗ[R] A)
+    : ∃! φ' : RL →ₐ[R] A, φ = φ'.toLinearMap ∘ₗ iota
+  ex_map_self (φ : L →ₗ[R] RL) : ∃! φ' : RL →ₐ[R] RL, φ = φ'.toLinearMap ∘ₗ iota
 
 
 
@@ -120,13 +121,27 @@ This says that the symmetric algebra over R of the zero module
 (here defined as any module which has at most one element) must be isomorphic
 as an R algebra to R.
 -/
-def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [a : Algebra R RZ]
+def symAlgOfZeroModule {RZ M : Type*} [CommRing RZ] [Algebra R RZ]
   [AddCommMonoid M] [Module R M] (hm : Subsingleton M) : IsSymAlg (R := R) (L := M) (RL := R) 0 := {
     ex_map := by
       intro a b c φ
       have hφ : φ = 0 := by exact Subsingleton.eq_zero φ
       -- R is initial in the category of R-algebras, so this morphism is unique
       let φ' : R →ₐ[R] a := Algebra.ofId R a
+      use φ'
+      constructor
+      · -- Prove relation holds
+        rw [hφ]
+        ext x
+        simp only [LinearMap.zero_apply, LinearMap.comp_zero]
+      · -- Prove uniqueness (should hold by definition)
+         intro ψ hψ
+         exact Algebra.ext_id_iff.mpr trivial
+    ex_map_self := by
+      intro φ
+      have hφ : φ = 0 := by exact Subsingleton.eq_zero φ
+      -- R is initial in the category of R-algebras, so this morphism is unique
+      let φ' : R →ₐ[R] R := Algebra.ofId R R
       use φ'
       constructor
       · -- Prove relation holds
@@ -167,19 +182,59 @@ def lem2 : IsSymAlg (iota R L) where
       exact
         (TensorAlgebra.lift_unique φ (a.comp (RingQuot.mkAlgHom R (SymRel R L)))).mp
           (id (Eq.symm b))
+  ex_map_self := by
+    intro φ
+    let tensorphi : TensorAlgebra R L →ₐ[R] 𝔖 R L:= TensorAlgebra.lift R φ
 
+    -- Define a morphism out of the symmetric algebra using RingQuot.lift
+    let res : ∀ ⦃x y : TensorAlgebra R L⦄, SymRel R L x y → tensorphi x = tensorphi y := by
+        intro x y h
+        induction h
+        case mul_comm x y =>
+          simp only [map_mul]
+          rw [@NonUnitalCommSemiring.mul_comm]
 
+    use (RingQuot.liftAlgHom (S := R) (s := SymRel R L) (B := 𝔖 R L)) ⟨TensorAlgebra.lift R φ, res⟩
+    constructor
+    · unfold iota
+      have teneq := TensorAlgebra.lift.eq_1 (M := L) (A := 𝔖 R L) R
+      have quoteq := RingQuot.eq_liftAlgHom_comp_mkAlgHom R (TensorAlgebra.lift R φ)
+      ext a
+      simp
+    · intro a b
+      apply RingQuot.liftAlgHom_unique
+      exact
+        (TensorAlgebra.lift_unique φ (a.comp (RingQuot.mkAlgHom R (SymRel R L)))).mp
+          (id (Eq.symm b))
 
  def IsSymAlg.lift {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
-         [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
+         [CommRing RM] [Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') : RM →ₐ[R] M' :=
-  (salg.ex_map phi).exists.choose
+  (salg.ex_map phi).choose
 
 /-
 Any two morphisms iM : M →ₗ[R] RM and iM' : M →ₗ[R] RM' both satisfying isSymAlg must
 have that RM and RM' are isomorphic
 -/
+
+theorem IsSymAlg.lift_spec {M M' : Type*} [AddCommMonoid M] [Module R M]
+         {RM : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing M'] [Algebra R M']
+         {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M')
+         : phi = (IsSymAlg.lift _ salg phi).toLinearMap ∘ₗ iM := by
+  exact (salg.ex_map phi).choose_spec.1
+
+theorem IsSymAlg.comp_spec {M : Type*} [AddCommMonoid M] [Module R M]
+         {RM RM' : Type*}
+         [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
+         {iM : M →ₗ[R] RM} {iM' : M →ₗ[R] RM'} (salg : IsSymAlg iM) (salg' : IsSymAlg iM'):
+  iM = ((AlgHom.comp (IsSymAlg.lift _ salg' iM) (IsSymAlg.lift _ salg iM')).toLinearMap) ∘ₗ iM := by
+  rw [AlgHom.comp_toLinearMap]
+  rw [LinearMap.comp_assoc]
+  rw [← IsSymAlg.lift_spec _ salg iM']
+  exact IsSymAlg.lift_spec _ salg' iM
+
 def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
          {RM RM' : Type*}
          [CommRing RM] [Algebra R RM] [CommRing RM'] [Algebra R RM']
@@ -191,30 +246,60 @@ def IsSymAlgIsoInvariant {M : Type*} [AddCommMonoid M] [Module R M]
     left_inv := by
       rw [@Function.leftInverse_iff_comp]
       let φ := IsSymAlg.lift R salg iM'
-      let φ' := IsSymAlg.lift R salg' iM
-      have h1 : iM' = φ ∘ₗ iM := (salg.ex_map iM').exists.choose_spec
-      have h2 : iM = φ' ∘ₗ iM' := (salg'.ex_map iM).exists.choose_spec
-      have h3 : φ' ∘ φ ∘ iM = id ∘ iM := by
+      let ψ := IsSymAlg.lift R salg' iM
+
+      have h1 : iM' = φ ∘ₗ iM := (salg.ex_map iM').choose_spec.1
+      have h2 : iM = ψ ∘ₗ iM' := (salg'.ex_map iM).choose_spec.1
+      have h3 : ((AlgHom.comp ψ φ).toLinearMap) ∘ iM = (AlgHom.id R RM).toLinearMap ∘ₗ iM := by
         nth_rw 2 [h2]
         rw [h1]
-        simp only [Function.comp_apply, LinearMap.coe_comp, LieHom.coe_toLinearMap,
-          AlgHom.coe_toLieHom, CompTriple.comp_eq]
-      rw [← Function.comp_assoc] at h3
-      /- You need to show that φ' ∘ φ is the ex_map of iM. But the salg iM dosen't accept  RM → RM--a map from type 1 to type 1 itself.
-      -/
-      sorry
-      --apply ((@salg'.ex_map RM' _ _ iM' AlgHom.id).exists.choose_spec).symm
-      --let unique := (salg.ex_map iM').unique
-      --have h3 := (Classical.choose_spec (@salg.ex_map _ _ _ _ _ _ RM _ iM))
+        simp only [AlgHom.comp_toLinearMap, LinearMap.coe_comp, AlgHom.toLinearMap_id,
+          LinearMap.id_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom]
+        exact rfl
 
-    right_inv := sorry
+      have comp_spec := IsSymAlg.comp_spec _ salg salg'
+      -- Both φ' ∘ φ and id satisfy the property from ex_map_self
+      have prop1 : iM = (AlgHom.comp ψ φ).toLinearMap ∘ₗ iM := by exact comp_spec
+      have prop2 : iM = (AlgHom.id R RM).toLinearMap ∘ₗ iM := by exact rfl
+
+      -- Use uniqueness to conclude they are equal
+      have h_unique := (salg.ex_map_self iM).unique prop1 prop2
+      --exact h_unique ▸ (AlgHom.id_apply R RM x)
+      have eq: (AlgHom.comp ψ φ) = (AlgHom.id R RM) := by exact h_unique
+      unfold φ ψ at eq
+      have : (AlgHom.id R RM) = (id : RM → RM) := by rfl
+      have this1 : ⇑(IsSymAlg.lift R salg' iM) ∘ ⇑(IsSymAlg.lift R salg iM') = (AlgHom.comp ψ φ) := by rfl
+      rw [←this, this1, eq]
+
+    right_inv := by
+      rw [@Function.rightInverse_iff_comp]
+      let φ := IsSymAlg.lift R salg iM'
+      let ψ := IsSymAlg.lift R salg' iM
+      have h1 : iM' = φ ∘ₗ iM := (salg.ex_map iM').choose_spec.1
+      have h2 : iM = ψ ∘ₗ iM' := (salg'.ex_map iM).choose_spec.1
+      have h3 : ((AlgHom.comp φ ψ).toLinearMap) ∘ iM' = (AlgHom.id R RM').toLinearMap ∘ₗ iM' := by
+        nth_rw 2 [h1]
+        rw [h2]
+        simp only [AlgHom.comp_toLinearMap, LinearMap.coe_comp, AlgHom.toLinearMap_id,
+          LinearMap.id_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom]
+        rfl
+
+      have comp_spec := IsSymAlg.comp_spec _ salg' salg
+      -- Both φ' ∘ φ and id satisfy the property from ex_map_self
+      have prop1 : iM' = (AlgHom.comp φ ψ).toLinearMap ∘ₗ iM' := by exact comp_spec
+      have prop2 : iM' = (AlgHom.id R RM').toLinearMap ∘ₗ iM' := by exact rfl
+
+      -- Use uniqueness to conclude they are equal
+      have h_unique := (salg'.ex_map_self iM').unique prop1 prop2
+      --exact h_unique ▸ (AlgHom.id_apply R RM x)
+      have eq: (AlgHom.comp φ ψ) = (AlgHom.id R RM') := by exact h_unique
+      unfold φ ψ at eq
+      have : (AlgHom.id R RM') = (id : RM' → RM') := by rfl
+      have this1 : ⇑(IsSymAlg.lift R salg iM') ∘ ⇑(IsSymAlg.lift R salg' iM) = (AlgHom.comp φ ψ) := by rfl
+      rw [←this, this1, eq]
     map_mul' := by simp only [map_mul, implies_true]
     map_add' := by simp only [map_add, implies_true]
     commutes' := by simp only [AlgHom.commutes, implies_true]
-
-
-
-
 
 
 
@@ -225,7 +310,8 @@ theorem IsSymAlg.liftCorrect {M M' : Type*} [AddCommMonoid M] [Module R M]
          {RM : Type*}
          [CommRing RM] [a : Algebra R RM] [CommRing M'] [Algebra R M']
          {iM : M →ₗ[R] RM} (salg : IsSymAlg iM) (phi : M →ₗ[R] M') :
-         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := ((salg.ex_map phi).exists.choose_spec).symm
+         ((IsSymAlg.lift R salg phi) ∘ₗ iM) = phi := ((salg.ex_map phi).choose_spec.1).symm
+
 
 
 def freeRkOneToPoly {M : Type*} [AddCommGroup M] [Module R M]
@@ -296,6 +382,71 @@ def lem3 {M : Type*} [AddCommGroup M] [Module R M] (mf : Module.Free R M)
           rw [←this]
           exact Eq.symm (Polynomial.aeval_X (φ e))
         rw [this]
+        simp only [AlgHom.toLinearMap_apply]
+      · intro g
+        simp
+        intro hg
+        -- Here, use Polynomial.algHom_ext to prove uniqueness
+        apply Polynomial.algHom_ext
+        have : φ' Polynomial.X = φ e := by exact Polynomial.aeval_X (φ e)
+        have this': g Polynomial.X = φ e := by
+          rw [hg]
+          simp only [LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+            Function.comp_apply]
+          apply AlgHom.congr_arg
+          have : (freeRkOneToPoly R mf r1) e = Basis.constr B R (fun _ ↦ Polynomial.X) e := by
+            simp [freeRkOneToPoly, Basis.constr]
+          rw [this]
+          exact Eq.symm (Basis.constr_basis B R (fun x ↦ Polynomial.X) idx)
+        rw [this, this']
+    ex_map_self := by
+      intro φ
+      have : Module.Finite R M := Module.finite_of_finrank_eq_succ r1
+      let B := Module.finBasis R M
+      -- Take e to be the unique element of our basis B
+
+      let idx : Fin (Module.finrank R M) := Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one)
+      let e : M := B ⟨0, by aesop⟩
+      -- Use Polynomial.aeval to define a morphism φ' : Polynomial R →ₐ[R] A which
+      -- takes X and maps it to φ(e)
+      let φ' : Polynomial R →ₐ[R] Polynomial R := Polynomial.aeval (φ e)
+
+      use φ'
+      constructor
+      · simp only
+        have (x : M) : ∃ (y : R), x = y • e := by
+          use (B.repr x) (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))
+          rw [← B.sum_repr x, Finset.sum_eq_single (Fin.mk 0 (by rw [r1]; exact Nat.zero_lt_one))]
+          · simp only [map_smul, Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
+            Finsupp.single_eq_same]
+          · intro i hi1 hi2
+            have this :  i = idx := by
+              have : Fintype.card (Fin (Module.finrank R M)) ≤ 1 := by
+                simp only [Fintype.card_fin]
+                exact Nat.le_of_eq r1
+              apply Fintype.card_le_one_iff.mp this
+            have this' : i ≠ idx := by exact hi2
+            contradiction
+          · intro h
+            have : idx ∈ Finset.univ := by
+              simp only [Finset.mem_univ]
+            exact False.elim (h this)
+        rw [@LinearMap.ext_iff]
+        intro x
+        specialize this x
+        rcases this with ⟨y, hy⟩
+        rw [hy]
+        simp only [map_smul, LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+          Function.comp_apply]
+        have: φ e = φ' ((freeRkOneToPoly R mf r1) e) := by
+          have : Polynomial.X = (freeRkOneToPoly R mf r1) e := by
+            unfold freeRkOneToPoly
+            simp only [Polynomial.aeval_X]
+            exact Eq.symm (Basis.constr_basis (Module.finBasis R M) R (fun x ↦ Polynomial.X) idx)
+          rw [←this]
+          exact Eq.symm (Polynomial.aeval_X (φ e))
+        rw [this]
+        simp only [AlgHom.toLinearMap_apply]
       · intro g
         simp
         intro hg
@@ -391,6 +542,27 @@ def cor1 : IsSymAlg (basisToPoly R L I basis_I) where
       rw [hf]
       simp only [LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
         Function.comp_apply, Basis.constr_basis]
+      simp only [AlgHom.toLinearMap_apply]
+  ex_map_self := by
+    intro φ
+    simp[basisToPoly]
+
+    use MvPolynomial.aeval (R := R) (fun i => φ (basis_I i))
+    constructor
+    · apply Basis.ext basis_I
+      intro i
+      simp
+
+    · simp
+      intro f hf
+      apply MvPolynomial.algHom_ext
+      intro i
+      simp only [bind₁_X_right]
+      -- Should be very simple to prove this
+      rw [hf]
+      simp only [LinearMap.coe_comp, LieHom.coe_toLinearMap, AlgHom.coe_toLieHom,
+        Function.comp_apply, Basis.constr_basis]
+      simp only [AlgHom.toLinearMap_apply]
 
 
 
