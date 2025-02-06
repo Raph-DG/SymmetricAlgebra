@@ -19,6 +19,8 @@ class IsHomogeneousRelation {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
 
 namespace HomogeneousRelation
 
+
+
 section RingCon
 
 variable {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
@@ -190,9 +192,12 @@ end RingCon
 section GradedRing
 
 variable (𝒜 : ι → AddSubmonoid A) [GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
-#check RingQuot.mkRingHom rel
 
-instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
+
+noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
+    fun _ x ↦ Classical.propDecidable (x ≠ 0)
+
+noncomputable instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
   --'one_mem', 'mul_mem', 'decompose'', 'left_inv', 'right_inv'
   one_mem := by
     use 1
@@ -210,22 +215,29 @@ instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) wh
     · rw [map_mul, ha2, hb2]
   decompose' := by
     intro a
-    let b := Classical.choose ((RingQuot.mkRingHom_surjective rel) a)
-    have hb : RingQuot.mkRingHom rel b = a :=
-      Classical.choose_spec ((RingQuot.mkRingHom_surjective rel) a)
-    set x := DirectSum.decomposeRingEquiv 𝒜 b with hx
-    let f := (AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜
-    simp only [Function.comp_apply]
+    let b := (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
+    let x := DirectSum.decomposeRingEquiv 𝒜 b
+    have q : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
+      intro i
+      simp only [Function.comp_apply, AddSubmonoid.mem_map, x]
+      apply Subtype.mk
+      · apply Exists.intro
+        · apply And.intro
+          · apply ZeroMemClass.zero_mem
+          · simp only [map_zero]
+            rfl
+    exact DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support q
 
+
+  left_inv φ := by
+    sorry
+
+  right_inv := by
     sorry
 
 
 
-  left_inv := sorry
-
-  right_inv := sorry
-
-
+#check MvPolynomial.weightedDecomposition
 
 
 
