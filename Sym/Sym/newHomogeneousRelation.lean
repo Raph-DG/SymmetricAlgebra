@@ -77,7 +77,7 @@ lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) 
 
 
 lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α] {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M)
-    (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x))  :
+    (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x)) :
     r (∑ x ∈ s, f x) (∑ x ∈ s, g x) := by
   induction s using Finset.induction with
   | empty =>
@@ -114,13 +114,9 @@ theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Ri
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (a * c)) ((proj 𝒜 n) (b * c)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
-  let f : ι × ι → A :=
-    fun ij ↦ ↑(((DirectSum.decompose 𝒜) a) ij.1) * ↑(((DirectSum.decompose 𝒜) c) ij.2)
-  let g : ι × ι → A :=
-    fun ij ↦ ↑(((DirectSum.decompose 𝒜) b) ij.1) * ↑(((DirectSum.decompose 𝒜) c) ij.2)
   rw [coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) a) _ Finset.subset_union_left (Set.Subset.refl _),
     coe_mul_sum_support_subset 𝒜 ((DirectSum.decompose 𝒜) b) _ Finset.subset_union_right (Set.Subset.refl _)]
-  apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
+  apply Finset.relation_sum_induction _ _ (EqvGen (RingQuot.Rel rel))
   · intro _ _ _ _ hab hcd
     rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
     exact RingConGen.Rel.add hab hcd
@@ -133,13 +129,9 @@ theorem eqvGen_proj_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Rin
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (c * a)) ((proj 𝒜 n) (c * b)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
-  let f : ι × ι → A :=
-    fun ij ↦ ↑(((DirectSum.decompose 𝒜) c) ij.1) * ↑(((DirectSum.decompose 𝒜) a) ij.2)
-  let g : ι × ι → A :=
-    fun ij ↦ ↑(((DirectSum.decompose 𝒜) c) ij.1) * ↑(((DirectSum.decompose 𝒜) b) ij.2)
   rw [coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) a) (Set.Subset.refl _) Finset.subset_union_left,
     coe_mul_sum_support_subset 𝒜 _ ((DirectSum.decompose 𝒜) b) (Set.Subset.refl _) Finset.subset_union_right]
-  apply Finset.relation_sum_induction f g (EqvGen (RingQuot.Rel rel))
+  apply Finset.relation_sum_induction _ _ (EqvGen (RingQuot.Rel rel))
   · intro _ _ _ _ hab hcd
     rw [RingQuot.eqvGen_rel_eq] at hab hcd ⊢
     exact RingConGen.Rel.add hab hcd
@@ -217,7 +209,7 @@ noncomputable instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel))
     intro a
     let b := (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
     let x := DirectSum.decomposeRingEquiv 𝒜 b
-    have q : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
+    have : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
       intro i
       simp only [Function.comp_apply, AddSubmonoid.mem_map, x]
       apply Subtype.mk
@@ -226,7 +218,7 @@ noncomputable instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel))
           · apply ZeroMemClass.zero_mem
           · simp only [map_zero]
             rfl
-    exact DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support q
+    exact DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support this
 
 
   left_inv φ := by
