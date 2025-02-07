@@ -20,7 +20,6 @@ class IsHomogeneousRelation {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
 namespace HomogeneousRelation
 
 
-
 section RingCon
 
 variable {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A]
@@ -74,10 +73,10 @@ lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) 
   exact EqvGen.trans (c * x) (c * y) (c * z) h1 h2
 
 
-
-
-lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α] {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M)
-    (r : M → M → Prop) (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0) (base : ∀ x ∈ s, r (f x) (g x)) :
+lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α]
+    {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M) (r : M → M → Prop)
+    (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0)
+    (base : ∀ x ∈ s, r (f x) (g x)) :
     r (∑ x ∈ s, f x) (∑ x ∈ s, g x) := by
   induction s using Finset.induction with
   | empty =>
@@ -110,7 +109,8 @@ noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x �
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
 
-theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+theorem eqvGen_proj_mul_right {a b c : A} (n : ι)
+    (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (a * c)) ((proj 𝒜 n) (b * c)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -125,7 +125,8 @@ theorem eqvGen_proj_mul_right {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (Ri
   · exact fun x _ => eqvGen_ringQuot_mul_left rel (h x.1)
 
 
-theorem eqvGen_proj_mul_left {a b c : A} (n : ι) (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
+theorem eqvGen_proj_mul_left {a b c : A} (n : ι)
+    (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (c * a)) ((proj 𝒜 n) (c * b)) := by
   simp only [proj_apply] at h
   simp only [proj_apply, DirectSum.decompose_mul, DirectSum.coe_mul_apply]
@@ -181,16 +182,35 @@ instance : IsHomogeneousRelation 𝒜 (RingConGen.Rel rel) :=
 
 end RingCon
 
-section GradedRing
+noncomputable section GradedRing
 
 variable (𝒜 : ι → AddSubmonoid A) [GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
 
 
-noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
+#check DirectSum.decomposeRingEquiv
+#check DirectSum.coeAddMonoidHom
+#check MvPolynomial.weightedDecomposition
+
+
+local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
-noncomputable instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
-  --'one_mem', 'mul_mem', 'decompose'', 'left_inv', 'right_inv'
+/-- The `decompose'` argument of `RingQuotGradedRing`. -/
+def decompose' := fun a : RingQuot rel =>
+  let b := Classical.choose $ (RingQuot.mkRingHom_surjective rel) a
+  let x := DirectSum.decomposeRingEquiv 𝒜 b
+  have : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
+    intro i
+    simp only [Function.comp_apply, AddSubmonoid.mem_map, x]
+    apply Subtype.mk
+    · constructor
+      · constructor
+        · apply ZeroMemClass.zero_mem
+        · simp only [map_zero] ; rfl
+  DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support this
+
+
+instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
   one_mem := by
     use 1
     constructor
@@ -205,31 +225,15 @@ noncomputable instance : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel))
     constructor
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · rw [map_mul, ha2, hb2]
-  decompose' := by
-    intro a
-    let b := (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
-    let x := DirectSum.decomposeRingEquiv 𝒜 b
-    have : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
-      intro i
-      simp only [Function.comp_apply, AddSubmonoid.mem_map, x]
-      apply Subtype.mk
-      · apply Exists.intro
-        · apply And.intro
-          · apply ZeroMemClass.zero_mem
-          · simp only [map_zero]
-            rfl
-    exact DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support this
-
-
-  left_inv φ := by
+  decompose' := decompose' 𝒜 rel
+  left_inv a := by
+    have hb := Classical.choose_spec $ (RingQuot.mkRingHom_surjective rel) a
+    have test := DirectSum.sum_support_of (decompose' 𝒜 rel a)
+    rw [← test]
+    simp only [Function.comp_apply, map_sum]
     sorry
-
   right_inv := by
     sorry
-
-
-
-#check MvPolynomial.weightedDecomposition
 
 
 
@@ -240,7 +244,7 @@ section GradedAlgebra
 variable {R : Type*} [CommRing R] [Algebra R A]
 variable (𝒜 : ι → Submodule R A) [GradedAlgebra 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
 
-instance : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
+instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
   one_mem := by
     use 1
     constructor
@@ -257,7 +261,6 @@ instance : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) w
     · rw [map_mul, ha2, hb2]
   decompose' := by
     intro h
-
     sorry
 
   left_inv := sorry
