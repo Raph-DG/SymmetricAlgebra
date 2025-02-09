@@ -2,7 +2,11 @@ import Mathlib
 --import LieAlgCohomology.MissingLemmas.TwoSidedIdeal
 
 /-
-The interaction between TwoSidedIdeal and Ideals seems to be not as good as we'd expected, and another PR involving reconstructing two-sided ideals is currently being reviewed at #17908. So, we decided not to mess with TwoSidedIdeal. Instead, we will try to state and prove the necessary things in homogeneous relations. (which actually made things easier to use for SymmetricAlgebra)
+The interaction between TwoSidedIdeal and Ideals seems to be not as good as we'd expected,
+and another PR involving reconstructing two-sided ideals is currently being reviewed at #17908.
+So, we decided not to mess with TwoSidedIdeal.
+Instead, we will try to state and prove the necessary things in homogeneous relations.
+(which actually made things easier to use for SymmetricAlgebra)
 -/
 
 #check RingQuot.mkRingHom
@@ -184,7 +188,7 @@ end RingCon
 
 noncomputable section GradedRing
 
-variable (𝒜 : ι → AddSubmonoid A) [GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
+variable (𝒜 : ι → AddSubmonoid A) [inst : GradedRing 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
 
 
 #check DirectSum.decomposeRingEquiv
@@ -198,7 +202,7 @@ local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
 /-- The `decompose'` argument of `RingQuotGradedRing`. -/
 def decompose' := fun a : RingQuot rel =>
   let b := Classical.choose $ (RingQuot.mkRingHom_surjective rel) a
-  let x := DirectSum.decomposeRingEquiv 𝒜 b
+  let x := inst.decompose' b
   have : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) := by
     intro i
     simp only [Function.comp_apply, AddSubmonoid.mem_map, x]
@@ -209,6 +213,24 @@ def decompose' := fun a : RingQuot rel =>
         · simp only [map_zero] ; rfl
   DirectSum.mk (fun i => (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) x.support this
 
+
+lemma support_subset_decompose' (a : RingQuot rel) : DFinsupp.support (decompose' 𝒜 rel a) ⊆
+    DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)) := by
+  unfold decompose' DirectSum.mk
+  simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
+  eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.support_mk_subset]
+
+
+lemma decompose'_map_commute (a : RingQuot rel) :
+    ∀ x ∈ DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)),
+    ↑((decompose' 𝒜 rel a) x) =
+    (RingQuot.mkRingHom rel) ((inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)) x) := by
+  intro x hx
+  unfold decompose' DirectSum.mk
+  simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
+  eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.mk_apply,
+  DFinsupp.mem_support_toFun, ne_eq, Classical.dite_not]
+  sorry
 
 instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
   one_mem := by
@@ -227,15 +249,40 @@ instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom 
     · rw [map_mul, ha2, hb2]
   decompose' := decompose' 𝒜 rel
   left_inv a := by
-    have hb := Classical.choose_spec $ (RingQuot.mkRingHom_surjective rel) a
+    let b := Classical.choose $ (RingQuot.mkRingHom_surjective rel) a
+    have hb : (RingQuot.mkRingHom rel) b = a :=
+      Classical.choose_spec $ (RingQuot.mkRingHom_surjective rel) a
     have test := DirectSum.sum_support_of (decompose' 𝒜 rel a)
+    let t := inst.decompose' b
+    have test3 := DirectSum.sum_support_of t
+    have eq := inst.left_inv b
     rw [← test]
-    simp only [Function.comp_apply, map_sum]
-    sorry
+    apply_fun (DirectSum.coeAddMonoidHom 𝒜) at test3
+    apply_fun (RingQuot.mkRingHom rel) at test3
+    simp only [map_sum, DirectSum.coeAddMonoidHom_of] at test3 ⊢
+    have test4 : (RingQuot.mkRingHom rel) ((DirectSum.coeAddMonoidHom 𝒜) t) = a := by
+      rw [← hb]
+      simp only [DirectSum.Decomposition.decompose'_eq, t]
+      congr
+    rw [test4] at test3
+    nth_rw 3 [← test3]
+    have : ∑ x ∈ DFinsupp.support (decompose' 𝒜 rel a), ((decompose' 𝒜 rel a) x) =
+      ∑ x ∈ (DFinsupp.support t :  Finset ι), (((decompose' 𝒜 rel a) x) : RingQuot rel) := by
+      apply Finset.sum_subset
+      · exact support_subset_decompose' 𝒜 rel a
+      · intros x _ h
+        simp only [Function.comp_apply, DFinsupp.mem_support_toFun, ne_eq, not_not] at h
+        exact ZeroMemClass.coe_eq_zero.mpr h
+    rw [this]
+    apply Finset.sum_congr rfl
+    intro x hx
+    exact decompose'_map_commute 𝒜 rel a x hx
+
   right_inv := by
     sorry
 
-
+#check DirectSum.coeAddMonoidHom_of
+#check DirectSum.coeAddMonoidHom
 
 end GradedRing
 
