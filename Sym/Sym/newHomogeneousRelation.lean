@@ -190,24 +190,17 @@ noncomputable section GradedRing
 
 variable (𝒜 : ι → AddSubmonoid A) [inst : GradedRing 𝒜] (rel : A → A → Prop)
 
-
-#check DirectSum.decomposeRingEquiv
-#check DirectSum.coeAddMonoidHom
-#check MvPolynomial.weightedDecomposition
-
-
 local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
 /-- The `decompose'` argument of `RingQuotGradedRing`. -/
 def decompose' := fun a : RingQuot rel =>
-  let b := Classical.choose $ (RingQuot.mkRingHom_surjective rel) a
-  let x := inst.decompose' b
+  let x := inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
   let f : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) :=
     fun i => ⟨RingQuot.mkRingHom rel (x i), by
     obtain ⟨val, property⟩ := i
-    simp only [DirectSum.Decomposition.decompose'_eq, Function.comp_apply, AddSubmonoid.mem_map, x, b]
-    simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, x, b]
+    simp only [DirectSum.Decomposition.decompose'_eq, Function.comp_apply, AddSubmonoid.mem_map, x]
+    simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, x]
     constructor
     · constructor
       on_goal 2 => rfl
@@ -234,7 +227,7 @@ lemma decompose'_map_commute (a : RingQuot rel) :
 
 
 
-variable [inst' : IsHomogeneousRelation 𝒜 rel]
+variable [IsHomogeneousRelation 𝒜 rel]
 
 instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom rel)).comp 𝒜) where
   one_mem := by
@@ -278,18 +271,39 @@ instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom 
     intro x hx
     exact decompose'_map_commute 𝒜 rel a x hx
 
-  right_inv a := by
+  right_inv φ := by
+    apply DFinsupp.ext
+    intro m
+    rw [← Subtype.coe_inj]
+
+
     sorry
 
-#check DirectSum.coeAddMonoidHom_of
-#check DirectSum.coeAddMonoidHom
+
 
 end GradedRing
 
-section GradedAlgebra
+noncomputable section GradedAlgebra
 
 variable {R : Type*} [CommRing R] [Algebra R A]
-variable (𝒜 : ι → Submodule R A) [GradedAlgebra 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
+variable (𝒜 : ι → Submodule R A) [inst : GradedAlgebra 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
+
+local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
+    fun _ x ↦ Classical.propDecidable (x ≠ 0)
+
+/-- The `Algdecompose'` argument of `RingQuotGradedAlgebra`. -/
+def Algdecompose' := fun a : RingQuot rel =>
+  let x := inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
+  let f : (i : x.support) → ((Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) :=
+    fun i => ⟨RingQuot.mkAlgHom R rel (x i), by
+    obtain ⟨val, property⟩ := i
+    simp only [DirectSum.Decomposition.decompose'_eq, Function.comp_apply, Submodule.mem_map, x]
+    simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, x]
+    constructor
+    · constructor
+      on_goal 2 => rfl
+      · simp only [SetLike.coe_mem]⟩
+  DirectSum.mk (fun i => (Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) x.support f
 
 instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
   one_mem := by
@@ -306,10 +320,7 @@ instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHo
     constructor
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · rw [map_mul, ha2, hb2]
-  decompose' := by
-    intro h
-    sorry
-
+  decompose' := Algdecompose' 𝒜 rel
   left_inv := sorry
 
   right_inv := sorry
