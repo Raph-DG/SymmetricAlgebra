@@ -275,8 +275,6 @@ instance RingQuotGradedRing : GradedRing ((AddSubmonoid.map (RingQuot.mkRingHom 
     apply DFinsupp.ext
     intro m
     rw [← Subtype.coe_inj]
-
-
     sorry
 
 
@@ -310,6 +308,15 @@ lemma support_subset_Algdecompose' (a : RingQuot rel) : DFinsupp.support (Algdec
   simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
   eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.support_mk_subset]
 
+lemma Algdecompose'_map_commute (a : RingQuot rel) :
+    ∀ x ∈ DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)),
+    ↑((Algdecompose' 𝒜 rel a) x) =
+    (RingQuot.mkAlgHom R rel) ((inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)) x) := by
+  intro x hx
+  unfold Algdecompose' DirectSum.mk
+  simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, Function.comp_apply,
+    Finset.coe_sort_coe, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.mk_apply, not_false_eq_true, ↓reduceDIte,
+    eq_mp_eq_cast, id_eq]
 
 
 
@@ -337,12 +344,11 @@ instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHo
     rw [← DirectSum.sum_support_of (Algdecompose' 𝒜 rel a)]
     have sum := DirectSum.sum_support_of t
     apply_fun (DirectSum.coeAddMonoidHom 𝒜) at sum
-    apply_fun (RingQuot.mkRingHom rel) at sum
+    apply_fun (RingQuot.mkAlgHom R rel) at sum
     simp only [map_sum, DirectSum.coeAddMonoidHom_of] at sum ⊢
-    have hat : (RingQuot.mkRingHom rel) ((DirectSum.coeAddMonoidHom 𝒜) t) = a := by
+    have hat : (RingQuot.mkAlgHom R rel) ((DirectSum.coeAddMonoidHom 𝒜) t) = a := by
       rw [← hb]
-      exact congrArg (⇑(RingQuot.mkRingHom rel)) (inst.left_inv b)
-      sorry
+      exact congrArg (⇑(RingQuot.mkAlgHom R rel)) (inst.left_inv b)
     rw [hat] at sum
     nth_rw 3 [← sum]
     have : ∑ x ∈ DFinsupp.support (Algdecompose' 𝒜 rel a), ((Algdecompose' 𝒜 rel a) x) =
@@ -354,8 +360,8 @@ instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHo
     rw [this]
     apply Finset.sum_congr rfl
     intro x hx
-    exact decompose'_map_commute 𝒜 rel a x hx
-    sorry
+    exact Algdecompose'_map_commute 𝒜 rel a x hx
+
   right_inv := by
     sorry
 
