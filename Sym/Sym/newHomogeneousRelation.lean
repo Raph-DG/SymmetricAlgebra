@@ -188,14 +188,21 @@ end RingCon
 
 noncomputable section GradedRing
 
+
+
 variable (𝒜 : ι → AddSubmonoid A) [inst : GradedRing 𝒜] (rel : A → A → Prop)
 
 local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
+
+abbrev choose (rel : A → A → Prop) (a : RingQuot rel) :=
+  Classical.choose <| (RingQuot.mkRingHom_surjective rel) a
+
+
 /-- The `decompose'` argument of `RingQuotGradedRing`. -/
 def decompose' := fun a : RingQuot rel =>
-  let x := inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
+  let x := inst.decompose' (choose rel a)
   let f : (i : x.support) → ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) :=
     fun i => ⟨RingQuot.mkRingHom rel (x i), by
     obtain ⟨val, property⟩ := i
@@ -209,16 +216,16 @@ def decompose' := fun a : RingQuot rel =>
 
 
 lemma support_subset_decompose' (a : RingQuot rel) : DFinsupp.support (decompose' 𝒜 rel a) ⊆
-    DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)) := by
+    DFinsupp.support (inst.decompose' (choose rel a)) := by
   unfold decompose' DirectSum.mk
   simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
   eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.support_mk_subset]
 
 
 lemma decompose'_map_commute (a : RingQuot rel) :
-    ∀ x ∈ DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)),
+    ∀ x ∈ DFinsupp.support (inst.decompose' (choose rel a)),
     ↑((decompose' 𝒜 rel a) x) =
-    (RingQuot.mkRingHom rel) ((inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)) x) := by
+    (RingQuot.mkRingHom rel) (inst.decompose' ((choose rel a)) x) := by
   intro x hx
   unfold decompose' DirectSum.mk
   simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, Function.comp_apply,
@@ -284,14 +291,21 @@ end GradedRing
 noncomputable section GradedAlgebra
 
 variable {R : Type*} [CommRing R] [Algebra R A]
-variable (𝒜 : ι → Submodule R A) [inst : GradedAlgebra 𝒜] (rel : A → A → Prop) [IsHomogeneousRelation 𝒜 rel]
+variable (𝒜 : ι → Submodule R A) [inst : GradedAlgebra 𝒜] (rel : A → A → Prop)
 
 local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
 
+
+
+abbrev Algchoose (R : Type*) [CommRing R] [Algebra R A] (a : RingQuot rel)  :=
+  Classical.choose <| (RingQuot.mkAlgHom_surjective R rel) a
+
+
+
 /-- The `Algdecompose'` argument of `RingQuotGradedAlgebra`. -/
 def Algdecompose' := fun a : RingQuot rel =>
-  let x := inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)
+  let x := inst.decompose' (Algchoose rel R a)
   let f : (i : x.support) → ((Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) :=
     fun i => ⟨RingQuot.mkAlgHom R rel (x i), by
     obtain ⟨val, property⟩ := i
@@ -302,22 +316,28 @@ def Algdecompose' := fun a : RingQuot rel =>
       on_goal 2 => rfl
       · simp only [SetLike.coe_mem]⟩
   DirectSum.mk (fun i => (Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) x.support f
+
+
 lemma support_subset_Algdecompose' (a : RingQuot rel) : DFinsupp.support (Algdecompose' 𝒜 rel a) ⊆
-    DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)) := by
+    DFinsupp.support (inst.decompose' (Algchoose rel R a)) := by
   unfold Algdecompose' DirectSum.mk
   simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
   eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.support_mk_subset]
 
+
+
 lemma Algdecompose'_map_commute (a : RingQuot rel) :
-    ∀ x ∈ DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)),
+    ∀ x ∈ DFinsupp.support (inst.decompose' (Algchoose rel R a)),
     ↑((Algdecompose' 𝒜 rel a) x) =
-    (RingQuot.mkAlgHom R rel) ((inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)) x) := by
+    (RingQuot.mkAlgHom R rel) (inst.decompose' (Algchoose rel R a) x) := by
   intro x hx
   unfold Algdecompose' DirectSum.mk
   simp_all only [DirectSum.Decomposition.decompose'_eq, DFinsupp.mem_support_toFun, ne_eq, Function.comp_apply,
     Finset.coe_sort_coe, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.mk_apply, not_false_eq_true, ↓reduceDIte,
     eq_mp_eq_cast, id_eq]
 
+
+variable [IsHomogeneousRelation 𝒜 rel]
 
 
 instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
@@ -337,7 +357,7 @@ instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHo
     · rw [map_mul, ha2, hb2]
   decompose' := Algdecompose' 𝒜 rel
   left_inv a := by
-    let b := Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a
+    let b := Algchoose rel R a
     have hb : (RingQuot.mkAlgHom R rel) b = a :=
       Classical.choose_spec $ (RingQuot.mkAlgHom_surjective R rel) a
     let t := inst.decompose' b
