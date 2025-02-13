@@ -293,7 +293,7 @@ local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
 
 /-- The `Algdecompose'` argument of `RingQuotGradedAlgebra`. -/
 def Algdecompose' := fun a : RingQuot rel =>
-  let x := inst.decompose' (Classical.choose $ (RingQuot.mkRingHom_surjective rel) a)
+  let x := inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)
   let f : (i : x.support) → ((Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) :=
     fun i => ⟨RingQuot.mkAlgHom R rel (x i), by
     obtain ⟨val, property⟩ := i
@@ -304,6 +304,14 @@ def Algdecompose' := fun a : RingQuot rel =>
       on_goal 2 => rfl
       · simp only [SetLike.coe_mem]⟩
   DirectSum.mk (fun i => (Submodule.map (RingQuot.mkAlgHom R rel) ∘ 𝒜) i) x.support f
+lemma support_subset_Algdecompose' (a : RingQuot rel) : DFinsupp.support (Algdecompose' 𝒜 rel a) ⊆
+    DFinsupp.support (inst.decompose' (Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a)) := by
+  unfold Algdecompose' DirectSum.mk
+  simp only [Function.comp_apply, DirectSum.Decomposition.decompose'_eq, Finset.coe_sort_coe,
+  eq_mpr_eq_cast, cast_eq, AddMonoidHom.coe_mk, ZeroHom.coe_mk, DFinsupp.support_mk_subset]
+
+
+
 
 instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHom R rel)).comp 𝒜) where
   one_mem := by
@@ -321,9 +329,35 @@ instance RingQuotGradedAlgebra : GradedAlgebra ((Submodule.map (RingQuot.mkAlgHo
     · exact SetLike.GradedMul.mul_mem ha1 hb1
     · rw [map_mul, ha2, hb2]
   decompose' := Algdecompose' 𝒜 rel
-  left_inv := sorry
-
-  right_inv := sorry
+  left_inv a := by
+    let b := Classical.choose $ (RingQuot.mkAlgHom_surjective R rel) a
+    have hb : (RingQuot.mkAlgHom R rel) b = a :=
+      Classical.choose_spec $ (RingQuot.mkAlgHom_surjective R rel) a
+    let t := inst.decompose' b
+    rw [← DirectSum.sum_support_of (Algdecompose' 𝒜 rel a)]
+    have sum := DirectSum.sum_support_of t
+    apply_fun (DirectSum.coeAddMonoidHom 𝒜) at sum
+    apply_fun (RingQuot.mkRingHom rel) at sum
+    simp only [map_sum, DirectSum.coeAddMonoidHom_of] at sum ⊢
+    have hat : (RingQuot.mkRingHom rel) ((DirectSum.coeAddMonoidHom 𝒜) t) = a := by
+      rw [← hb]
+      exact congrArg (⇑(RingQuot.mkRingHom rel)) (inst.left_inv b)
+      sorry
+    rw [hat] at sum
+    nth_rw 3 [← sum]
+    have : ∑ x ∈ DFinsupp.support (Algdecompose' 𝒜 rel a), ((Algdecompose' 𝒜 rel a) x) =
+      ∑ x ∈ (DFinsupp.support t : Finset ι), (((Algdecompose' 𝒜 rel a) x) : RingQuot rel) := by
+      apply Finset.sum_subset (support_subset_Algdecompose' 𝒜 rel a)
+      · intros x _ h
+        simp only [Function.comp_apply, DFinsupp.mem_support_toFun, ne_eq, not_not] at h
+        exact ZeroMemClass.coe_eq_zero.mpr h
+    rw [this]
+    apply Finset.sum_congr rfl
+    intro x hx
+    exact decompose'_map_commute 𝒜 rel a x hx
+    sorry
+  right_inv := by
+    sorry
 
 end GradedAlgebra
 
