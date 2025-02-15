@@ -14,21 +14,15 @@ import Mathlib.RingTheory.GradedAlgebra.Basic
 #check RingQuot.mkAlgHom
 #check Relation.EqvGen
 
-#check RingQuot.mkRingHom
-#check RingQuot.mkAlgHom
-#check Relation.EqvGen
-
 variable {ι : Type*} [DecidableEq ι] [AddMonoid ι]
 variable {A : Type*} [Semiring A]
 
-class IsHomogeneousRelation {σ : Type*} [SetLike σ A]
-    [AddSubmonoidClass σ A] (𝒜 : ι → σ) [GradedRing 𝒜]
-(r : A → A → Prop) : Prop where
+class IsHomogeneousRelation {σ : Type*} [SetLike σ A] [AddSubmonoidClass σ A] (𝒜 : ι → σ)
+  [GradedRing 𝒜] (r : A → A → Prop) : Prop where
   is_homogeneous' : ∀ {x y : A}, r x y →
   ∀ i : ι, (Relation.EqvGen r) ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) y)
 
 namespace HomogeneousRelation
-
 
 section RingCon
 
@@ -37,10 +31,8 @@ variable (𝒜 : ι → σ) [GradedRing 𝒜] (rel : A → A → Prop)
 
 open Relation GradedRing
 
-
 lemma eqvGen_ringQuot_of_eqvGen {a b : A} (h : EqvGen rel a b) :
-    EqvGen (RingQuot.Rel rel) a b :=
-  Relation.EqvGen.mono (fun _ _ h' ↦ RingQuot.Rel.of h') h
+    EqvGen (RingQuot.Rel rel) a b := Relation.EqvGen.mono (fun _ _ h' ↦ RingQuot.Rel.of h') h
 
 lemma eqvGen_ringQuot_add_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
     EqvGen (RingQuot.Rel rel) (a + c) (b + c) := by
@@ -68,7 +60,6 @@ lemma eqvGen_ringQuot_mul_left {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
   | trans x y z _ _ h1 h2 =>
   exact EqvGen.trans (x * c) (y * c) (z * c) h1 h2
 
-
 lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) :
     EqvGen (RingQuot.Rel rel) (c * a) (c * b) := by
   induction h with
@@ -82,19 +73,14 @@ lemma eqvGen_ringQuot_mul_right {a b c : A} (h : EqvGen (RingQuot.Rel rel) a b) 
   | trans x y z _ _ h1 h2 =>
   exact EqvGen.trans (c * x) (c * y) (c * z) h1 h2
 
-
 lemma Finset.relation_sum_induction {α : Type*} {s : Finset α} [DecidableEq α]
     {M : Type*} [AddCommMonoid M] (f : α → M) (g : α → M) (r : M → M → Prop)
     (hom : ∀ (a b c d : M), r a b → r c d → r (a + c) (b + d)) (unit : r 0 0)
     (base : ∀ x ∈ s, r (f x) (g x)) :
     r (∑ x ∈ s, f x) (∑ x ∈ s, g x) := by
   induction s using Finset.induction with
-  | empty =>
-    simpa only [Finset.sum_empty]
-  | insert _ _ =>
-    simp_all only [Finset.mem_insert, or_true, implies_true, forall_const,
-    forall_eq_or_imp, not_false_eq_true, Finset.sum_insert]
-
+  | empty => simpa
+  | insert _ _ => simp_all
 
 lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [DecidableEq ι] [Semiring R]
     [SetLike σ R] [AddSubmonoidClass σ R] (A : ι → σ) [AddMonoid ι] [SetLike.GradedMonoid A]
@@ -109,15 +95,12 @@ lemma coe_mul_sum_support_subset {ι : Type*} {σ : Type*} {R : Type*} [Decidabl
   simp only [Finset.mem_product, DFinsupp.mem_support_toFun, ne_eq, not_and, not_not] at hx
   have : ((r x.1) * (r' x.2) : R) = 0 := by
     by_cases h : r x.1 = 0
-    · simp only [h, ZeroMemClass.coe_zero, zero_mul]
-    · simp only [hx h, ZeroMemClass.coe_zero, mul_zero]
-  simp only [this, ite_self]
-
-
+    · simp [h]
+    · simp [hx h]
+  simp [this]
 
 noncomputable local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
     fun _ x ↦ Classical.propDecidable (x ≠ 0)
-
 
 theorem eqvGen_proj_mul_right {a b c : A} (n : ι)
     (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
@@ -134,7 +117,6 @@ theorem eqvGen_proj_mul_right {a b c : A} (n : ι)
     exact RingConGen.Rel.refl 0
   · exact fun x _ => eqvGen_ringQuot_mul_left rel (h x.1)
 
-
 theorem eqvGen_proj_mul_left {a b c : A} (n : ι)
     (h : ∀ (i : ι), EqvGen (RingQuot.Rel rel) ((proj 𝒜 i) a) ((proj 𝒜 i) b)) :
     EqvGen (RingQuot.Rel rel) ((proj 𝒜 n) (c * a)) ((proj 𝒜 n) (c * b)) := by
@@ -150,8 +132,7 @@ theorem eqvGen_proj_mul_left {a b c : A} (n : ι)
     exact RingConGen.Rel.refl 0
   · exact fun x _ => eqvGen_ringQuot_mul_right rel (h x.2)
 
-variable [inst : IsHomogeneousRelation 𝒜 rel]
-
+variable [IsHomogeneousRelation 𝒜 rel]
 
 instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
   intro x y h ; induction h
@@ -170,14 +151,12 @@ instance : IsHomogeneousRelation 𝒜 (RingQuot.Rel rel) := ⟨by
     intro n
     exact eqvGen_proj_mul_left 𝒜 rel n h⟩
 
-
 instance : IsHomogeneousRelation 𝒜 (Relation.EqvGen rel) := by
   apply IsHomogeneousRelation.mk
   rw [Equivalence.eqvGen_eq (Relation.EqvGen.is_equivalence rel)]
   intro x y h
   induction h with
-  | refl =>
-    exact fun i ↦ Quot.eqvGen_exact rfl
+  | refl => exact fun i ↦ Quot.eqvGen_exact rfl
   | symm x y _ h1 =>
     exact fun i ↦ EqvGen.symm ((GradedRing.proj 𝒜 i) x) ((GradedRing.proj 𝒜 i) y) (h1 i)
   | trans j k l _ _ h2 h3 =>
