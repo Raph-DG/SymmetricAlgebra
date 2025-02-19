@@ -177,7 +177,10 @@ open DirectSum
 variable (𝒜 : ι → AddSubmonoid A) [inst : GradedRing 𝒜] (rel : A → A → Prop)
 
 local instance : (i : ι) → (x : ↥(𝒜 i)) → Decidable (x ≠ 0) :=
-    fun _ x ↦ Classical.propDecidable (x ≠ 0)
+  fun _ x ↦ Classical.propDecidable (x ≠ 0)
+
+instance : (i : ι) →  DecidableEq ↥((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) :=
+  fun i ↦ Classical.typeDecidableEq ↥((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i)
 
 
 abbrev choose (rel : A → A → Prop) (a : RingQuot rel) :=
@@ -205,8 +208,10 @@ variable [IsHomogeneousRelation 𝒜 rel]
 -- def decompose2 (a : RingQuot rel) : DirectSum ι fun i ↦ (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i :=
 --   DirectSum.mk (fun i ↦ (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i)
 --     (inst.decompose' <| choose rel a).support fun i ↦  decomposeAux 𝒜 rel a i
+
+
 lemma map_ZerotoZero (i : ι) : ((DirectSum.decompose 𝒜) (choose rel 0)) i = 0 := by
-    sorry
+   sorry
 
 
 def decomposeAux (a : RingQuot rel) (i : ι) : (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i :=
@@ -250,16 +255,16 @@ def decompose' : RingQuot rel →+ DirectSum ι fun i ↦ (AddSubmonoid.map (Rin
 
 
 
-
+set_option maxHeartbeats 0
 
 --lemma decompose''_eq_decompose' : decompose'' 𝒜 rel = decompose' 𝒜 rel := rfl
 
 
+
 lemma decompose'_of_eq (a : RingQuot rel) (i : ι)
     (ha : a ∈ (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) :
-    (((decompose' 𝒜 rel) a) i).1 = a := by
-      lift a to (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i using ha
-      sorry
+    (((decompose' 𝒜 rel) a) i) = a := by
+  sorry
 
 
 
@@ -267,19 +272,23 @@ lemma decompose'_of_eq (a : RingQuot rel) (i : ι)
 
 
 
-
-
-
+lemma decompose'_of_ne'  (i j : ι) (ne : i ≠ j)
+    (a : ((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i)) :
+    ((decompose' 𝒜 rel a) j) = 0 := by
+  sorry
 
 
 lemma decompose'_of_ne (a : RingQuot rel) (i j : ι) (ne : i ≠ j)
     (ha : a ∈ (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i) :
     ((decompose' 𝒜 rel a) j).1 = 0 := by
   lift a to (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i using ha
-  sorry
+  rw [decompose'_of_ne' 𝒜 rel i j ne a, ZeroMemClass.coe_zero]
+
 
 
 #check coe_decompose_mul_of_left_mem_of_not_le
+#check DirectSum.coeAddMonoidHom
+#check DirectSum.of
 
 
 
@@ -292,13 +301,21 @@ lemma decompose'_of (i : ι) (b : (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘
     rw [decompose'_of_eq]
     · simp
       apply DirectSum.coeAddMonoidHom_of
-    · simp only [Function.comp_apply, AddSubmonoid.mem_map]
-      use (choose rel b)
+    · use (choose rel b)
       constructor
       · sorry
-      · sorry
+
+      · rw [choose_spec rel b, DirectSum.coeAddMonoidHom_of]
+
+
       --exact Subtype.mem _
-  · sorry  --use decompose'_of_ne
+  · have := of_eq_of_ne
+      (β := (fun i ↦ ↥((AddSubmonoid.map (RingQuot.mkRingHom rel) ∘ 𝒜) i))) i j b ne.symm
+    rw [this, DirectSum.coeAddMonoidHom_of, decompose'_of_ne' _ _ i j ne.symm b]
+
+
+
+    --use decompose'_of_ne
 
 
 
@@ -317,8 +334,7 @@ lemma decompose'_of (i : ι) (b : (AddSubmonoid.map (RingQuot.mkRingHom rel) ∘
 
 lemma support_subset_decompose' (a : RingQuot rel) : DFinsupp.support (decompose' 𝒜 rel a) ⊆
     DFinsupp.support (inst.decompose' (choose rel a)) := by
-  unfold decompose' DirectSum.mk
-  simp
+  simp [decompose', DirectSum.mk]
 
 
 lemma decompose'_map_commute (a : RingQuot rel) :
